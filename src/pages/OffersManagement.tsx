@@ -47,12 +47,12 @@ const OffersManagement = () => {
 
   // Filter if projectId is provided
   const filteredOffers = projectId 
-    ? offers.filter(o => (o.business?.id === Number(projectId)))
+    ? offers.filter(o => (o.project?.id === Number(projectId)))
     : offers;
 
   // Group offers by project with type safety
   const offersByProject = filteredOffers.reduce<{[K: number]: Offer[]}>((acc, offer) => {
-    const projectId = offer.business?.id
+    const projectId = offer.project?.id
     if (!acc[projectId]) {
       acc[projectId] = []
     }
@@ -61,9 +61,9 @@ const OffersManagement = () => {
   }, {})
 
   const filteredProjectsMap = filteredOffers.reduce<{[K: number]: Project}>((acc, offer) => {
-    const projectId = offer.business?.id
+    const projectId = offer.project?.id
     if (!acc[projectId]) {
-      acc[projectId] = offer.business
+      acc[projectId] = offer.project
     }
     return acc
   }, {})
@@ -81,7 +81,7 @@ const OffersManagement = () => {
       </div>
 
       {filteredProjects.map((project) => (
-        <div key={project.id} className="space-y-4">
+        <div key={`project-${project.id}`} className="space-y-4">
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-semibold">{project.name}</h2>
             {project.logo && (
@@ -90,7 +90,7 @@ const OffersManagement = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {offersByProject[project.id]?.map((offer) => (
-              <OfferCard key={offer.id} offer={offer} />
+              <OfferCard key={`offer-${offer.id}`} offer={offer} />
             )) || (
               <p className="text-gray-500 col-span-full">No offers for this project yet</p>
             )}
@@ -133,7 +133,7 @@ function CreateOfferDialog({ projects }: { projects: Project[] }) {
     
     const newOffer: CreateOffer = {
       name: formData.get('name') as string,
-      business_id: Number(formData.get('business_id')),
+      project_id: Number(formData.get('project_id')),
       description: formData.get('description') as string,
       is_limited: isLimited,
       count_left: isLimited ? Number(formData.get('count_left')) : 0,
@@ -162,10 +162,10 @@ function CreateOfferDialog({ projects }: { projects: Project[] }) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="business_id">Project</Label>
+            <Label htmlFor="project_id">Project</Label>
             <select 
-              id="business_id" 
-              name="business_id"
+              id="project_id" 
+              name="project_id"
               className="bg-white w-full border rounded-md p-2"
               required
             >

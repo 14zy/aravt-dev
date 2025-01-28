@@ -4,10 +4,12 @@ import { User, JoinRequest, Skill, UserSkill } from '@/types';
 
 interface UserState {
   user: User | null;
+  all_users: User[];
   applications: JoinRequest[];
   availableSkills: Skill[];
   isLoading: boolean;
   error: string | null;
+  fetchAllUsers: () => Promise<void>;
   fetchUserProfile: () => Promise<void>;
   letUserCreateAravt: (user_id: number) => Promise<void>;
   fetchAvailableSkills: () => Promise<void>;
@@ -17,10 +19,15 @@ interface UserState {
 
 export const useUserStore = create<UserState>((set, get) => ({
   user: null,
+  all_users: [],
   applications: [],
   availableSkills: [],
   isLoading: false,
   error: null,
+  fetchAllUsers: async () => {
+    const all_users = await api.users();
+    set({ all_users });
+  },
   fetchUserProfile: async () => {
     set({ isLoading: true, error: null });
     try {

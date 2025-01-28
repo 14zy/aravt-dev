@@ -1,113 +1,136 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, Home, CreditCard, Star, Link as LinkIcon, Briefcase } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { Task, TaskSkill } from '@/types';
 import { Badge } from '@/components/ui/badge';
-import { Task } from '@/types';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { CreditCard, Calendar, Clock, Award, Tag } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface TaskCardProps {
   task: Task;
-  onUpdate?: (taskId: number, updates: Partial<Task>) => void;
-  onDelete?: (taskId: number) => void;
+  isDragging?: boolean;
+  onUpdate?: (taskId: number, updates: Partial<Task>) => Promise<void>;
   isLoading?: boolean;
+  className?: string;
 }
 
-export const TaskCard = ({ task, onUpdate, onDelete, isLoading }: TaskCardProps) => (
-  <Card className="hover:bg-gray-50 max-w-3xl w-full">
-    <CardHeader className="p-4">
-      <div className="flex justify-between items-start">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            {task.is_global ? (
-              <Globe className="h-4 w-4 text-blue-500" />
-            ) : (
-              <Home className="h-4 w-4 text-green-500" />
-            )}
-            <CardTitle className="text-lg">{task.title}</CardTitle>
-            {task.priority && (
-              <Badge variant={
-                task.priority === 'high' ? 'destructive' :
-                task.priority === 'medium' ? 'default' :
-                'secondary'
-              }>
-                {task.priority}
-              </Badge>
-            )}
-            {task.business && (
-              <Badge variant="outline" className="flex items-center gap-1">
-                <Briefcase className="h-3 w-3" />
-                {task.business.name}
-              </Badge>
-            )}
-          </div>
-          <p className="text-gray-500">{task.description}</p>
-          {task.business && (
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <span>Business:</span>
-              <a 
-                href={task.business.link} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline flex items-center gap-1"
-              >
-                {task.business.name}
-                <LinkIcon className="h-3 w-3" />
-              </a>
-            </div>
-          )}
-        </div>
-        <div className="flex gap-2">
-          {onUpdate && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => onUpdate(task.id, { is_done: true })}
-              disabled={isLoading || task.is_done === true}
-            >
-              Complete
-            </Button>
-          )}
-          {onDelete && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="text-red-500 hover:text-red-600"
-              onClick={() => onDelete(task.id)}
-              disabled={isLoading}
-            >
-              Delete
-            </Button>
-          )}
-        </div>
+export const TaskCard = ({ task, isDragging, className }: TaskCardProps) => {
+  const {
+    setNodeRef,
+    attributes,
+    listeners,
+    transform,
+    transition,
+    isDragging: isSortableDragging,
+  } = useSortable({
+    id: task?.id?.toString() || '',
+    data: {
+      type: 'Task',
+      task,
+      column: task?.column?.id ?? null,
+    },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const priorityColors = {
+    low: 'bg-green-100 text-green-800',
+    medium: 'bg-yellow-100 text-yellow-800',
+    high: 'bg-red-100 text-red-800'
+  };
+
+  const formatSkillLevel = (level: number) => {
+    if (level <= 3) return 'Basic';
+    if (level <= 6) return 'Intermediate';
+    return 'Advanced';
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={cn(
+        'p-3 bg-background rounded-lg shadow cursor-grab touch-none',
+        (isDragging || isSortableDragging) && 'opacity-50',
+        'hover:shadow-md transition-shadow',
+        className
+      )}
+    >
+      <div className="flex justify-between items-start mb-2">
+        <h3 className="font-medium">{task.title}</h3>
+        <Badge className={priorityColors[task.priority]}>
+          {task.priority}
+        </Badge>
       </div>
-    </CardHeader>
-    <CardContent className="p-4 pt-0">
-      <div className="space-y-4">
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center">
-              <CreditCard className="h-4 w-4 mr-1 text-gray-500" />
-              <span>{task.reward} {task.reward_type}</span>
+      <p className="text-sm text-muted-foreground mb-3">{task.description}</p>
+      <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center gap-2">
+          <CreditCard className="h-4 w-4" />
+          <span>{task.reward} {task.reward_type}</span>
+        </div>
+        {task.date_time && (
+          <div className="flex items-center gap-1">
+            <Calendar className="h-4 w-4" />
+            <span>{new Date(task.date_time).toLocaleDateString()}</span>
+          </div>
+        )}
+      </div>
+      {task.responsible_users_ids && task.responsible_users_ids.length > 0 && (
+        <div className="mt-2 flex -space-x-2">
+          {task.responsible_users_ids.map((userId: number) => (
+            <Avatar key={userId} className="h-6 w-6 border-2 border-background">
+              <AvatarFallback className="text-xs">
+                {userId}
+              </AvatarFallback>
+            </Avatar>
+          ))}
+        </div>
+      )}
+      <div className="mt-4 space-y-4">
+        {/* Due Date */}
+        {task.date_time && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Calendar className="h-4 w-4" />
+            <span>Due: {format(new Date(task.date_time), 'MMM d, yyyy')}</span>
+          </div>
+        )}
+        
+        {/* Created Date */}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Clock className="h-4 w-4" />
+          <span>Created: {format(new Date(task.date_time), 'MMM d, yyyy')}</span>
+        </div>
+        
+        {/* Skills */}
+        {task.skills?.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Tag className="h-4 w-4" />
+              <span>Required Skills:</span>
             </div>
-            <div className="flex items-center">
-              <Star className="h-4 w-4 mr-1 text-gray-500" />
-              <span>Due: {new Date(task.date_time).toLocaleDateString()}</span>
-            </div>
-            <div>
-              {task.link && (task.link !== 'No link yet') && (
-                <a 
-                  href={task.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center text-blue-500 hover:text-blue-600"
+            <div className="flex flex-wrap gap-2">
+              {task.skills.map((skill) => (
+                <Badge
+                  key={skill.id}
+                  variant="secondary"
+                  className="flex items-center gap-1"
                 >
-                  <LinkIcon className="h-4 w-4 mr-1" />
-                  <span>View Resource</span>
-                </a>
-              )}
+                  {skill.name}
+                  <span className="text-xs opacity-70">
+                    ({formatSkillLevel(skill.level)})
+                  </span>
+                </Badge>
+              ))}
             </div>
           </div>
-        </div>
+        )}
       </div>
-    </CardContent>
-  </Card>
-);
+    </div>
+  );
+};

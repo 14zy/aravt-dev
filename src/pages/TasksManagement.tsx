@@ -6,15 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useAuthStore } from '@/store/auth';
 import { useTasksStore } from '@/store/tasks';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { TaskCard } from '@/components/client/TaskCard';
-import { api } from '@/lib/api';
-import { Project } from '@/types';
+import CreateTaskForm from '@/components/client/CreateTaskForm';
+
 
 const TasksManagement = () => {
   const { user } = useAuthStore();
@@ -30,62 +27,6 @@ const TasksManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
-  const [businesses, setBusinesses] = useState<Project[]>([]);
-
-  useEffect(() => {
-    const fetchBusinesses = async () => {
-      if (user?.aravt) {
-        try {
-          const aravtData = await api.aravt_aravt(user.aravt.id);
-          setBusinesses(aravtData.business || []);
-        } catch (error) {
-          console.error('Error fetching businesses:', error);
-        }
-      }
-    };
-    fetchBusinesses();
-  }, [user?.aravt]);
-
-  const handleCreateTask = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    try {
-      const formData = new FormData(e.currentTarget);
-      const responsibleUsers = formData.get('responsible_users_ids') as string;
-      
-      // Handle both string and array inputs for responsible users
-      const responsible_users_ids = responsibleUsers ?
-          responsibleUsers.trim().startsWith('[') ?
-            JSON.parse(responsibleUsers) :
-            responsibleUsers.split(',').map(id => Number(id.trim()))
-        : [];
-
-      const taskData = {
-        title: formData.get('title') as string,
-        description: formData.get('description') as string,
-        link: formData.get('link') as string || '',
-        reward: Math.floor(Number(formData.get('reward'))),
-        reward_type: (formData.get('reward_type') === 'AT' ? 'AT' : 'USDT') as 'AT' | 'USDT',
-        definition_of_done: JSON.parse(formData.get('definition_of_done') as string || '{}'),
-        responsible_users_ids,
-        is_done: false,
-        is_global: formData.get('is_global') === 'true',
-        date_time: formData.get('deadline') as string,
-        priority: formData.get('priority') as 'low' | 'medium' | 'high',
-        one_time: formData.get('one_time') === 'true',
-        business_id: formData.get('business_id') ? Number(formData.get('business_id')) : undefined,
-        completions: {
-          completions_amount: 0,
-          is_completion_approved: false,
-          num_of_approved: 0
-        }
-      };
-      await api.tasks_set_task(taskData);
-      await fetchTasksData();
-      setShowCreateTaskForm(false);
-    } catch (error) {
-      console.error('Error creating task:', error);
-    }
-  };
 
   const filterTasks = (tasks: any[]) => {
     return tasks.filter(task => {
@@ -124,147 +65,7 @@ const TasksManagement = () => {
         </Button>
 
         {showCreateTaskForm && (
-          <Dialog open={showCreateTaskForm} onOpenChange={setShowCreateTaskForm}>
-            <DialogContent className="max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Create New Task</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleCreateTask}>
-                <div className="space-y-4">
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="title">Title *</Label>
-                      <Input id="title" name="title" required />
-                    </div>
-                    <div>
-                      <Label htmlFor="description">Description *</Label>
-                      <Textarea id="description" name="description" required />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="reward">Reward *</Label>
-                      <div className="flex gap-2">
-                        <Input 
-                          id="reward" 
-                          name="reward" 
-                          type="number" 
-                          step="1" 
-                          min="0" 
-                          required 
-                          className="flex-1"
-                        />
-                        <div className="w-24">
-                          <Select name="reward_type" defaultValue="AT">
-                            <SelectTrigger>
-                              <SelectValue placeholder="Type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="AT">AT</SelectItem>
-                              <SelectItem value="USDT">USDT</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="deadline">Deadline *</Label>
-                      <Input id="deadline" name="deadline" type="datetime-local" required />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="priority">Priority *</Label>
-                      <Select name="priority" defaultValue="medium">
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="high">High</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="is_global">Scope *</Label>
-                      <Select name="is_global" defaultValue="false">
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="false">Local</SelectItem>
-                          <SelectItem value="true">Global</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="one_time">Frequency *</Label>
-                      <Select name="one_time" defaultValue="true">
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="true">One Time</SelectItem>
-                          <SelectItem value="false">Recurring</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 pt-4 border-t">
-                    <h3 className="text-sm font-medium text-gray-500">Optional Details</h3>
-                    <div>
-                      <Label htmlFor="link">Resource Link</Label>
-                      <Input id="link" name="link" placeholder="https://" />
-                    </div>
-                    <div>
-                      <Label htmlFor="business_id">Business</Label>
-                      <Select name="business_id">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a business" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="project_id">None</SelectItem>
-                          {businesses?.map((business) => (
-                            <SelectItem key={business.id} value={business.id.toString()}>
-                              {business.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="responsible_users_ids">Responsible Users (comma-separated IDs)</Label>
-                      <Input 
-                        id="responsible_users_ids" 
-                        name="responsible_users_ids" 
-                        placeholder="e.g. 1, 2, 3" 
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="definition_of_done">Definition of Done (JSON)</Label>
-                      <Textarea 
-                        id="definition_of_done" 
-                        name="definition_of_done" 
-                        placeholder="{}"
-                        defaultValue="{}"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <DialogFooter className="mt-6">
-                  <Button type="button" variant="outline" onClick={() => setShowCreateTaskForm(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">Create Task</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+          <CreateTaskForm showCreateTaskForm={showCreateTaskForm} setShowCreateTaskForm={setShowCreateTaskForm} fetchTasksData={fetchTasksData} />
         )}     
       </div>
 

@@ -7,7 +7,6 @@ import { Aravt } from '@/types';
 import JoinRequestForm from '@/components/client/JoinRequestForm';
 import { useAravtsStore } from '@/store/aravts';
 import { toast } from 'react-toastify';
-import { Link } from 'react-router-dom';
 
 interface AravtCardProps {
   aravt: Aravt;
@@ -144,11 +143,11 @@ const AravtCard = ({ aravt }: AravtCardProps) => {
             </div>
           )}
 
-          {detailedAravt.business?.length > 0 && (
+          {detailedAravt.projects?.length > 0 && (
             <div>
               <h4 className="font-medium text-sm text-gray-500">Projects</h4>
               <div className="space-y-2 mt-1">
-                {detailedAravt.business.map(project => (
+                {detailedAravt.projects.map(project => (
                   <div key={project.id} className="text-sm">
                     {project.name}
                   </div>

@@ -14,6 +14,8 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import CreateAravtForm from '@/components/client/CreateAravtForm';
 import { useAravtsStore } from '@/store/aravts';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
+import TaskBoard from '@/components/client/TaskBoard';
 
 const StatCard = ({ title, value, icon: Icon, progress }: {
   title: string;
@@ -103,6 +105,7 @@ const AravtDashboard = () => {
   const { fetchAravtDetails, aravtDetails, isLoading: aravtLoading } = useAravtsStore();
   const user = useAuthStore(state => state.user);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDashboardData();
@@ -110,34 +113,60 @@ const AravtDashboard = () => {
     if (user?.aravt?.id) {
       fetchAravtDetails(user.aravt.id);
     }
-  }, [fetchDashboardData, fetchAravtDetails, user?.aravt_id]);
+    if (!user || !user.aravt?.id) {
+      navigate('/login');
+      return;
+    }
+  }, [fetchDashboardData, fetchAravtDetails, user?.aravt_id, navigate]);
 
   if (dashboardLoading || aravtLoading) {
     return <LoadingSpinner />;
   }
 
   return (
-    <div className="mx-auto py-4 px-3 space-y-4">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">{user?.aravt?.name}</h1>
-          <p className="text-gray-500">{user?.username} you are in the Aravt</p>
-        </div>
-        <div className="flex gap-1">
-          <Button variant="outline" size="sm">
-            <Bell className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm">
-            <Settings className="h-4 w-4" />
-          </Button>
-        </div>
+    <div className="w-full max-w-6xl mx-auto mt-8 space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold">{user?.aravt?.name} Dashboard</h1>
+        <p className="text-gray-500">Welcome to your Aravt dashboard {user?.username}</p>
       </div>
 
-      {dashboardError && (
-        <Alert variant="destructive">
-          <AlertDescription>{dashboardError}</AlertDescription>
-        </Alert>
-      )}
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Total Tasks</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{aravtDetails?.tasks?.length || 0}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Projects</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{aravtDetails?.projects?.length || 0}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Team Members</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{aravtDetails?.team?.length || 0}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Task Overview */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Task Overview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TaskBoard showGlobalTasks />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -235,11 +264,11 @@ const AravtDashboard = () => {
               </div>
             )}
 
-            {aravtDetails.business?.length > 0 && (
+            {aravtDetails.projects?.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium text-gray-500">Projects</h4>
                 <div className="grid gap-2 mt-2">
-                  {aravtDetails.business.map(project => (
+                  {aravtDetails.projects.map(project => (
                     <Card key={project.id} className="p-4">
                       <div className="flex items-center justify-between">
                         <div>

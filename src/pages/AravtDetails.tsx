@@ -169,14 +169,14 @@ const AravtDetails = () => {
         )}
 
         {/* Projects */}
-        {aravtDetails.business?.length > 0 && (
+        {aravtDetails.projects?.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Projects</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">
-                {aravtDetails.business.map(project => (
+                {aravtDetails.projects.map(project => (
                   <Card key={project.id}>
                     <CardContent className="pt-6">
                       <div className="flex justify-between items-start">

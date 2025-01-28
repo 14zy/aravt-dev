@@ -81,7 +81,7 @@ const ProjectDetails = () => {
   const navigate = useNavigate();
 
   // Filter offers for this project
-  const projectOffers = offers.filter(offer => offer.business.id === Number(id));
+  const projectOffers = offers.filter(offer => offer.project?.id === Number(id));
 
   useEffect(() => {
     // TODO: Fetch project details

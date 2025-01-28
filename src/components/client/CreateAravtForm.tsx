@@ -1,14 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAravtsStore } from '@/store/aravts';
 import { useAuthStore } from '@/store/auth';
+import { useUserStore } from '@/store/user';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from '@/components/ui/label';
 
 const CreateAravtForm = ({ onClose }: { onClose: () => void }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [init_user_id, setInitUserId] = useState(0);
+  const [init_user_id, setInitUserId] = useState<number>(0);
   const createAravt = useAravtsStore(state => state.createAravt);
   const fetchUser = useAuthStore(state => state.fetchUser);
+  const { all_users, fetchAllUsers } = useUserStore();
+
+  useEffect(() => {
+    fetchAllUsers();
+  }, [fetchAllUsers]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,7 +31,6 @@ const CreateAravtForm = ({ onClose }: { onClose: () => void }) => {
       onClose();
       fetchUser();
       alert('Aravt created successfully');
-
     } catch (error) {
       console.error('Failed to create Aravt:', error);
     }
@@ -28,8 +41,9 @@ const CreateAravtForm = ({ onClose }: { onClose: () => void }) => {
       <form onSubmit={handleSubmit} className="bg-white p-4 rounded shadow-md">
         <h2 className="text-lg font-bold mb-4">Create New Aravt</h2>
         <div className="mb-4">
-          <label className="block mb-1">Name</label>
+          <Label htmlFor="name">Name</Label>
           <input
+            id="name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -38,8 +52,9 @@ const CreateAravtForm = ({ onClose }: { onClose: () => void }) => {
           />
         </div>
         <div className="mb-4">
-          <label className="block mb-1">Description</label>
+          <Label htmlFor="description">Description</Label>
           <textarea
+            id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="border rounded w-full p-2 bg-gray-100"
@@ -47,14 +62,22 @@ const CreateAravtForm = ({ onClose }: { onClose: () => void }) => {
           />
         </div>
         <div className="mb-4">
-          <label className="block mb-1">Init User ID</label>
-          <input
-            type="number"
-            value={init_user_id}
-            onChange={(e) => setInitUserId(parseInt(e.target.value))}
-            className="border rounded w-full p-2 bg-gray-100"
-            required
-          />
+          <Label htmlFor="init_user_id">Initial User</Label>
+          <Select
+            value={init_user_id.toString()}
+            onValueChange={(value) => setInitUserId(parseInt(value))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select initial user" />
+            </SelectTrigger>
+            <SelectContent>
+              {all_users.map((user) => (
+                <SelectItem key={user.id} value={user.id.toString()}>
+                  {user.username} ({user.full_name})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="flex justify-end">
           <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
