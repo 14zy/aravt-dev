@@ -67,6 +67,7 @@ const SignUp = () => {
       
       await api.register(registrationData);
       // Navigate to login while preserving referral info in the URL
+      alert('Registration successful! Please confirm your e-mail before logging in.');
       if (referralInfo) {
         navigate(`/login?ref=${referralInfo.referredById}${
           referralInfo.aravtId ? `&aravtId=${referralInfo.aravtId}` : ''

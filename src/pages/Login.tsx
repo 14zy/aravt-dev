@@ -183,6 +183,13 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
                     >
                     Forgot password?
                     </Link>
+                    <br />
+                    <Link 
+                    to="/resend-email" 
+                    className="text-primary hover:underline"
+                    >
+                    Resend confirmation E-mail
+                    </Link>
                 </div>
               </form>
 
