@@ -1,32 +1,36 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { api } from '@/lib/api';
+import { useAuthStore } from '@/store/auth';
 import { RegistrationData } from '@/types';
+import { useEffect, useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { useAuthStore } from '@/store/auth';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const SignUp = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const referralInfo = useAuthStore(state => state.referralInfo);
-  
-  useEffect(() => {
-    // Parse referral data from URL on component mount
-    const searchParams = new URLSearchParams(location.search);
-    const ref = searchParams.get('ref');
-    const aravtId = searchParams.get('aravtId');
+  const normalize = (value: string): string => value.trim();
 
-    // Only set referral info if we don't already have it or if URL has new info
-    if ((ref || aravtId) && (!referralInfo || 
-        ref !== referralInfo.referredById?.toString() || 
-        aravtId !== referralInfo.aravtId?.toString())) {
-      useAuthStore.getState().setReferralInfo({
-        referredById: ref ? parseInt(ref) : undefined,
-        aravtId: aravtId ? parseInt(aravtId) : undefined,
-      });
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const refParam = searchParams.get('ref');
+    const aravtParam = searchParams.get('aravtId');
+
+    const referredById = refParam ? parseInt(refParam, 10) : undefined;
+    const aravtId = aravtParam ? parseInt(aravtParam, 10) : undefined;
+
+    if (referredById === undefined && aravtId === undefined) {
+      return;
     }
-  }, [location, referralInfo]);
+
+    const current = useAuthStore.getState().referralInfo;
+    const isSame = !!current && current.referredById === referredById && current.aravtId === aravtId;
+
+    if (!isSame) {
+      useAuthStore.getState().setReferralInfo({ referredById, aravtId });
+    }
+  }, [location.search]);
 
   const [formData, setFormData] = useState<RegistrationData>({
     username: '',
@@ -62,16 +66,19 @@ const SignUp = () => {
     try {
       const registrationData = {
         ...formData,
-        refered_by_id: referralInfo?.referredById
+        username: normalize(formData.username),
+        email: normalize(formData.email),
+        city: normalize(formData.city),
+        full_name: normalize(formData.full_name),
+        refered_by_id: referralInfo?.referredById,
       };
-      
+
       await api.register(registrationData);
       // Navigate to login while preserving referral info in the URL
       alert('Registration successful! Please confirm your e-mail before logging in.');
       if (referralInfo) {
-        navigate(`/login?ref=${referralInfo.referredById}${
-          referralInfo.aravtId ? `&aravtId=${referralInfo.aravtId}` : ''
-        }`);
+        navigate(`/login?ref=${referralInfo.referredById}${referralInfo.aravtId ? `&aravtId=${referralInfo.aravtId}` : ''
+          }`);
       } else {
         navigate('/login');
       }
@@ -97,6 +104,7 @@ const SignUp = () => {
                 placeholder="Username"
                 value={formData.username}
                 onChange={handleChange}
+                onBlur={() => setFormData(prev => ({ ...prev, username: normalize(prev.username) }))}
               />
             </div>
             <div>
@@ -110,6 +118,7 @@ const SignUp = () => {
                 placeholder="Email address"
                 value={formData.email}
                 onChange={handleChange}
+                onBlur={() => setFormData(prev => ({ ...prev, email: normalize(prev.email) }))}
               />
             </div>
             <div>
@@ -123,7 +132,7 @@ const SignUp = () => {
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleChange}
-                />
+              />
             </div>
             <div>
               <label htmlFor="city" className="sr-only">City</label>
@@ -136,7 +145,8 @@ const SignUp = () => {
                 placeholder="City"
                 value={formData.city}
                 onChange={handleChange}
-                />
+                onBlur={() => setFormData(prev => ({ ...prev, city: normalize(prev.city) }))}
+              />
             </div>
             <div className="mb-6">
               <label htmlFor="date_of_birth" className="sr-only">Date of Birth</label>
@@ -168,7 +178,8 @@ const SignUp = () => {
                 placeholder="Full name"
                 value={formData.full_name}
                 onChange={handleChange}
-                />
+                onBlur={() => setFormData(prev => ({ ...prev, full_name: normalize(prev.full_name) }))}
+              />
             </div>
           </div>
           <div>
