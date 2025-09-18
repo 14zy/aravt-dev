@@ -1,14 +1,14 @@
-import { Link, Outlet, useLocation } from 'react-router-dom'
-import { cn } from '@/lib/utils'
-import { useAuthStore } from '@/store/auth'
+import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/store/auth';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 
 const NavLink = ({ to, children }: { to: string; children: React.ReactNode }) => {
   const location = useLocation()
   const isActive = location.pathname === to
 
   return (
-    <Link 
-      to={to} 
+    <Link
+      to={to}
       className={cn(
         "text-gray-900 hover:text-gray-500 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap text-center inline-flex items-center justify-center",
         isActive && "bg-gray-100"
@@ -21,43 +21,43 @@ const NavLink = ({ to, children }: { to: string; children: React.ReactNode }) =>
 
 export default function Layout() {
   const { user, aravt } = useAuthStore()
-  const isAdmin = user?.role === 'SuperAdmin' 
+  const isAdmin = user?.role === 'SuperAdmin'
   const location = useLocation()
-  const isSignUpPage = location.pathname === '/signup'
-  const isLoginPage = location.pathname === '/login'
+  const headerExcludedPaths = ['/login', '/signup', '/resend-email']
+  const isNeedHeader = !headerExcludedPaths.includes(location.pathname) && Boolean(user)
 
   return (
-    <div className="min-h-screen w-full">
-      {!isSignUpPage && !isLoginPage && (
+    <div className="min-h-screen w-full flex flex-col">
+      {isNeedHeader && (
         <header className="bg-white shadow w-full h-28 navbar sm:h-16">
           <nav className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center">
                 <div className="flex sm:flex">
                   {
-                    user && (Boolean(aravt) ? (
-                    <div className="">
-                      <NavLink to="/dashboard">Dashboard</NavLink>
-                      <NavLink to="/members">Members</NavLink>
-                      <NavLink to="/projects">Projects</NavLink>
-                      <NavLink to="/tasks">Tasks</NavLink>                      
-                      <NavLink to="/wallet">Wallet</NavLink>
-                      <NavLink to="/offers">Offers</NavLink>
-                      <NavLink to="/Learn">Learn</NavLink>
-                      <NavLink to="/browse">Aravts</NavLink>
-                      
-                      
-                      {isAdmin && <NavLink to="/admin">Admin</NavLink>}
-                      <NavLink to="/profile">{user.username}</NavLink>
-                    </div>
-                  ) : (
-                    <div className="flex sm:flex-row">
-                      <NavLink to="/browse">Aravts</NavLink>
-                      <NavLink to="/Learn">Learn</NavLink>
-                      <NavLink to="/profile">{user.username}</NavLink>
-                    </div>
-                  ))
-                }
+                    user && (aravt ? (
+                      <div className="">
+                        <NavLink to="/dashboard">Dashboard</NavLink>
+                        <NavLink to="/members">Members</NavLink>
+                        <NavLink to="/projects">Projects</NavLink>
+                        <NavLink to="/tasks">Tasks</NavLink>
+                        <NavLink to="/wallet">Wallet</NavLink>
+                        <NavLink to="/offers">Offers</NavLink>
+                        <NavLink to="/Learn">Learn</NavLink>
+                        <NavLink to="/browse">Aravts</NavLink>
+
+
+                        {isAdmin && <NavLink to="/admin">Admin</NavLink>}
+                        <NavLink to="/profile">{user.username}</NavLink>
+                      </div>
+                    ) : (
+                      <div className="flex sm:flex-row">
+                        <NavLink to="/browse">Aravts</NavLink>
+                        <NavLink to="/Learn">Learn</NavLink>
+                        <NavLink to="/profile">{user.username}</NavLink>
+                      </div>
+                    ))
+                  }
                 </div>
               </div>
             </div>

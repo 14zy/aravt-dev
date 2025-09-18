@@ -296,6 +296,23 @@ export const api = {
     return response.data;
   },
 
+  async resend_confirmation_email(data: {
+    email: string;
+  }): Promise<MessageResponse> {
+    try {
+      const response = await axios.post('/resend_confirmation_email/', data);
+      return response.data;
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ detail?: string; message?: string }>;
+      const detailMessage =
+        error.response?.data?.detail || error.response?.data?.message;
+      if (detailMessage) {
+        throw new Error(detailMessage);
+      }
+      throw err;
+    }
+  },
+
   async link_telegram(token: string): Promise<MessageResponse> {
     const response = await axios.post('/link_telegram/' + `${token}`);
     return response.data;
