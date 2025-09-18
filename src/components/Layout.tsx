@@ -23,7 +23,10 @@ export default function Layout() {
   const { user, aravt } = useAuthStore()
   const isAdmin = user?.role === 'SuperAdmin'
   const location = useLocation()
-  const headerExcludedPaths = ['/login', '/signup', '/resend-email']
+  const headerExcludedPaths = [
+    '/login', '/signup', '/resend-email', '/forgot-password', '/reset_password',
+    '/complete_registration'
+  ]
   const isNeedHeader = !headerExcludedPaths.includes(location.pathname) && Boolean(user)
 
   return (

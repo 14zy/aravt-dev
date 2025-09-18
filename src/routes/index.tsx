@@ -3,6 +3,7 @@ import AravtDashboard from '@/pages/AravtDashboard'
 import AravtDetails from '@/pages/AravtDetails'
 import BrowseAravts from '@/pages/BrowseAravts'
 import CompleteRegistration from '@/pages/CompleteRegistration'
+import ForgotPassword from '@/pages/ForgotPassword'
 import Learn from '@/pages/Learn'
 import LinkTelegram from '@/pages/LinkTelegram'
 import Login from '@/pages/Login'
@@ -12,6 +13,7 @@ import Profile from '@/pages/Profile'
 import ProjectDetails from '@/pages/ProjectDetails'
 import ProjectManagement from '@/pages/ProjectManagement'
 import ResendEmail from '@/pages/ResendEmail'
+import ResetPassword from '@/pages/ResetPassword'
 import SignUp from '@/pages/SignUp'
 import TasksManagement from '@/pages/TasksManagement'
 import Wallet from '@/pages/Wallet'
@@ -31,6 +33,8 @@ export function AppRoutes() {
         <Route path="/complete_registration" element={<CompleteRegistration />} />
         <Route path="/link_telegram" element={<LinkTelegram />} />
         <Route path="/resend-email" element={<ResendEmail />} />
+        <Route path="/reset_password/:token" element={<ResetPassword />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
       </Route>
 
       {/* Protected routes */}

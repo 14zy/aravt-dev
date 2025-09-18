@@ -74,8 +74,18 @@ export const api = {
     token: string,
     data: { new_password: string; repeat_password: string }
   ): Promise<MessageResponse> {
-    const response = await axios.put('/reset_password/' + `${token}`, data);
-    return response.data;
+    try {
+      const response = await axios.put('/reset_password/' + `${token}`, data);
+      return response.data;
+    } catch (err: unknown) {
+      const error = err as AxiosError<{ detail?: string; message?: string }>;
+      const detailMessage =
+        error.response?.data?.detail || error.response?.data?.message;
+      if (detailMessage) {
+        throw new Error(detailMessage);
+      }
+      throw err;
+    }
   },
 
   async users(): Promise<User[]> {

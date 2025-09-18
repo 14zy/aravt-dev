@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label'
 import { api } from '@/lib/api'
 import { useState } from 'react'
 
-const ResendEmail = () => {
+const ForgotPassword = () => {
     const [email, setEmail] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [message, setMessage] = useState<string | null>(null)
@@ -17,10 +17,10 @@ const ResendEmail = () => {
         setError(null)
         setMessage(null)
         try {
-            const res = await api.resend_confirmation_email({ email: email.trim() })
-            setMessage(res.message || 'Confirmation email has been resent if the email exists.')
+            const res = await api.reset_password({ email: email.trim() })
+            setMessage(res.message || 'Password reset email has been sent if the email exists.')
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : 'Failed to resend confirmation email')
+            setError(err instanceof Error ? err.message : 'Failed to send password reset email')
         } finally {
             setIsLoading(false)
         }
@@ -30,7 +30,7 @@ const ResendEmail = () => {
         <div className="w-full">
             <div className="flex justify-center bg-gray-50">
                 <div className="sm:w-[24rem] space-y-6 p-6 bg-white rounded-lg shadow mt-4 mb-4 mx-4">
-                    <h2 className="text-center text-xl font-semibold">Resend confirmation email</h2>
+                    <h2 className="text-center text-xl font-semibold">Reset password</h2>
                     {error && (
                         <Alert variant="destructive">
                             <AlertDescription>{error}</AlertDescription>
@@ -55,7 +55,7 @@ const ResendEmail = () => {
                             />
                         </div>
                         <Button type="submit" className="w-full" disabled={isLoading}>
-                            {isLoading ? 'Sending…' : 'Resend email'}
+                            {isLoading ? 'Sending…' : 'Send reset email'}
                         </Button>
                     </form>
                 </div>
@@ -64,6 +64,4 @@ const ResendEmail = () => {
     )
 }
 
-export default ResendEmail
-
-
+export default ForgotPassword
