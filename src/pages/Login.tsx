@@ -1,17 +1,16 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { ArrowRight, Globe } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { useAuthStore } from '@/store/auth';
 import { User } from '@/types';
-import { TonConnectButton } from '@tonconnect/ui-react';
-import { useTonConnect } from '@/hooks/useTonConnect';
+import { ArrowRight, Globe } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+
 
 import { api } from '@/lib/api';
 
@@ -20,11 +19,12 @@ interface LoginProps {
 }
 
 const Login = ({ onLoginSuccess }: LoginProps) => {
+  const normalizeUsername = (value: string): string => value.trim();
   const navigate = useNavigate();
   const setToken = useAuthStore(state => state.setToken);
   const login = useAuthStore(state => state.login);
   const referralInfo = useAuthStore(state => state.referralInfo);
-  
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -35,19 +35,20 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-    
+
     try {
-      const { access_token, user } = await api.login(username, password);
+      const normalizedUsername = normalizeUsername(username);
+      const { access_token, user } = await api.login(normalizedUsername, password);
       setToken(access_token)
       const current_user: User = await api.users_user(user.id);
-      
+
       login(current_user, access_token);
       onLoginSuccess?.();
 
       if (referralInfo?.aravtId) {
         useAuthStore.getState().setReferralInfo(null);
         navigate(`/aravts/${referralInfo.aravtId}`);
-      } else if (Boolean(current_user.aravt)) {
+      } else if (current_user.aravt) {
         navigate('/dashboard');
       } else {
         navigate('/browse');
@@ -63,24 +64,24 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
     <div className="flex justify-center min-h-screen bg-gray-50 pt-4">
       <Card className="w-full max-w-md mx-4 pt-3">
         <CardHeader className="space-y-1">
-            <div className="flex items-center justify-between pb-2">
+          <div className="flex items-center justify-between pb-2">
             <CardTitle className="text-2xl">Welcome to Aravt</CardTitle>
 
             <Select defaultValue="all">
-                      <SelectTrigger className="w-[64px]">
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all"><Globe className="h-6 w-6 text-gray-500" /></SelectItem>
-                        <SelectItem value="mn">🇲🇳 Mongolian</SelectItem>
-                        <SelectItem value="ru">🇷🇺 Rusain</SelectItem>
-                        <SelectItem value="zh">🇨🇳 Chinese</SelectItem>
-                        <SelectItem value="jp">🇯🇵 Japanese</SelectItem>
-                        <SelectItem value="kp">🇰🇷 Korean</SelectItem>
-                      </SelectContent>
-                    </Select>
-            
-            </div>
+              <SelectTrigger className="w-[64px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all"><Globe className="h-6 w-6 text-gray-500" /></SelectItem>
+                <SelectItem value="mn">🇲🇳 Mongolian</SelectItem>
+                <SelectItem value="ru">🇷🇺 Rusain</SelectItem>
+                <SelectItem value="zh">🇨🇳 Chinese</SelectItem>
+                <SelectItem value="jp">🇯🇵 Japanese</SelectItem>
+                <SelectItem value="kp">🇰🇷 Korean</SelectItem>
+              </SelectContent>
+            </Select>
+
+          </div>
           <CardDescription>
             Please login to your account or sign up for new one
           </CardDescription>
@@ -91,7 +92,7 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          
+
           <Tabs defaultValue="username" className="space-y-4">
             {/*<TabsList className="grid w-full grid-cols-1">
               <TabsTrigger value="username">Username</TabsTrigger>
@@ -136,6 +137,7 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
                     placeholder="username"
                     value={username}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
+                    onBlur={() => setUsername(prev => normalizeUsername(prev))}
                     required
                   />
                 </div>
@@ -149,8 +151,8 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
                     required
                   />
                 </div>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                   disabled={isLoading}
                 >
@@ -165,37 +167,36 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
                 </Button>
                 <div className="text-center text-sm">
                   Don't have an account?{" "}
-                  <Link 
-                    to={`/signup${referralInfo ? 
-                      `?ref=${referralInfo.referredById}${
-                        referralInfo.aravtId ? `&aravtId=${referralInfo.aravtId}` : ''
-                      }` 
+                  <Link
+                    to={`/signup${referralInfo ?
+                      `?ref=${referralInfo.referredById}${referralInfo.aravtId ? `&aravtId=${referralInfo.aravtId}` : ''
+                      }`
                       : ''
-                    }`} 
+                      }`}
                     className="text-primary hover:underline"
                   >
                     Sign up
                   </Link>
-                    <br />
-                    <Link 
-                    to="/forgot-password" 
+                  <br />
+                  <Link
+                    to="/forgot-password"
                     className="text-primary hover:underline"
-                    >
+                  >
                     Forgot password?
-                    </Link>
-                    <br />
-                    <Link 
-                    to="/resend-email" 
+                  </Link>
+                  <br />
+                  <Link
+                    to="/resend-email"
                     className="text-primary hover:underline"
-                    >
+                  >
                     Resend confirmation E-mail
-                    </Link>
+                  </Link>
                 </div>
               </form>
 
               <div className="relative w-full mt-4 pt-4">
                 <b>Video</b>
-                
+
                 <iframe
                   width="560"
                   height="315"
@@ -210,7 +211,7 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
               </div>
 
               <div className="relative w-full h-80 mt-4">
-              
+
                 <img
                   src="https://app.aravt.io/img/gerege/photo_2568-01-31 15.54.09.jpeg"
                   alt="Background"
