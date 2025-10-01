@@ -154,3 +154,7 @@ const AravtRadialTree = ({ aravts }: AravtRadialTreeProps) => {
 };
 
 export default AravtRadialTree;
+
+
+// https://dev.aravt.io/data
+// https://observablehq.com/@d3/radial-tree/2
