@@ -43,6 +43,7 @@ export function AppRoutes() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/admin" element={<AdminPanel />} />
         <Route path="/dashboard" element={<AravtDashboard />} />
+        <Route path="/dashboard/:aravtId" element={<AravtDashboard />} />
         <Route path="/aravts/:id" element={<AravtDetails />} />
         <Route path="/projects" element={<ProjectManagement />} />
         <Route path="/projects/:id" element={<ProjectDetails />} />

@@ -1,10 +1,10 @@
-import { create } from 'zustand';
 import { api } from '@/lib/api';
-import { User, JoinRequest, Skill, UserSkill } from '@/types';
+import { ApplicationsGroupedListOut, JoinRequestWithAravt, Skill, UserSelf } from '@/types';
+import { create } from 'zustand';
 
 interface UserState {
-  user: User | null;
-  applications: JoinRequest[];
+  user: UserSelf | null;
+  applications: JoinRequestWithAravt[];
   availableSkills: Skill[];
   isLoading: boolean;
   error: string | null;
@@ -25,7 +25,17 @@ export const useUserStore = create<UserState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const user = await api.who_am_i(); // Fetch user data from API
-      const applications: JoinRequest[] = await api.check_my_applications();
+      const grouped: ApplicationsGroupedListOut = await api.check_my_applications();
+      const applications: JoinRequestWithAravt[] = (grouped.application_groups || []).flatMap(group =>
+        (group.applications || []).map(app => ({
+          id: app.id,
+          aravt_id: app.aravt_id,
+          user: app.user,
+          text: app.text,
+          date_time: app.date_time,
+          aravt_name: group.aravt.name,
+        }))
+      );
       set({ user, applications, isLoading: false });
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'Failed to fetch user profile', isLoading: false });

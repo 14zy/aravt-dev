@@ -1,28 +1,29 @@
-import { useEffect, useState } from 'react';
-import { useUserStore } from '@/store/user';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { cn } from '@/lib/utils'
-import { useAuthStore } from '@/store/auth'
-import { api } from '@/lib/api'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Link, useLocation } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/select";
+import { api } from '@/lib/api';
+import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/store/auth';
+import { useUserStore } from '@/store/user';
+import type { UserAravtLink } from '@/types';
 import { X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 
 const Profile = () => {
   const { user, applications, isLoading, error, fetchUserProfile, availableSkills, fetchAvailableSkills, addSkill, removeSkill } = useUserStore();
@@ -33,6 +34,25 @@ const Profile = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const token = searchParams.get('token');
+
+  const userFromStore = useAuthStore.getState().user;
+  const aravtLinks = useMemo(() => (
+    (userFromStore?.aravts ?? []) as UserAravtLink[]
+  ), [userFromStore]);
+  const aravtOptions = useMemo(() => aravtLinks.map(link => ({
+    id: link.aravt.id,
+    name: link.aravt.name ?? `Aravt #${link.aravt.id}`,
+  })), [aravtLinks]);
+  const [selectedAravtId, setSelectedAravtId] = useState<number | undefined>(undefined);
+  useEffect(() => {
+    if (!selectedAravtId && aravtOptions[0]?.id) {
+      setSelectedAravtId(aravtOptions[0].id);
+    }
+  }, [aravtOptions, selectedAravtId]);
+  const selectedAravtLink = useMemo(
+    () => aravtLinks.find(l => l.aravt.id === selectedAravtId),
+    [aravtLinks, selectedAravtId]
+  );
 
   useEffect(() => {
     if (token) {
@@ -97,24 +117,39 @@ const Profile = () => {
           <CardTitle>My Aravt</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {user?.aravt ? (
-            <>
+          {user?.aravts && user.aravts.length > 0 ? (
+            <div className="space-y-3">
+              {aravtOptions.length > 1 && (
+                <div>
+                  <label className="text-sm text-muted-foreground">Select Aravt</label>
+                  <Select value={selectedAravtId?.toString() ?? ''} onValueChange={(v) => setSelectedAravtId(Number(v))}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Choose aravt" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {aravtOptions.map(opt => (
+                        <SelectItem key={opt.id} value={opt.id.toString()}>{opt.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <div className="p-4 border rounded-lg">
-                <p className="font-medium">🌀 {user.aravt.name} (№{user.aravt.id})</p>
-                <p className="text-sm text-gray-500">{user.aravt.description}</p>
+                <p className="font-medium">🌀 {selectedAravtLink?.aravt.name ?? `Aravt #${selectedAravtLink?.aravt.id}`} (№{selectedAravtLink?.aravt.id})</p>
+                <p className="text-sm text-gray-500">{selectedAravtLink?.aravt.is_draft ? 'Draft' : 'Active'}</p>
               </div>
-              <Button asChild className="w-full">
-                <Link to="/dashboard">Open Dashboard</Link>
+
+              <Button asChild className="w-full" disabled={!selectedAravtId}>
+                <Link to={`/dashboard/${selectedAravtId || ''}`}>Open Dashboard</Link>
               </Button>
               <Button asChild className="w-full">
                 <Link to="https://t.me/share/url?url=https://aravt.io/">Share app</Link>
               </Button>
-              <Button variant="outline"  asChild className="w-full">
+              <Button variant="outline" asChild className="w-full">
                 <Link to="#">Leave Aravt</Link>
               </Button>
-
-              
-            </>
+            </div>
           ) : (
             <p className="text-gray-500">Not a member of any Aravt</p>
           )}
@@ -198,27 +233,28 @@ const Profile = () => {
           )}
         </CardContent>
       </Card>
-
-            
   
       {<div className="mt-4 pt-4 mb-4">
-        <h3 className="text-md font-semibold">Requests</h3>
+        <h3 className="text-md font-semibold mb-2">Requests</h3>
         {applications?.length > 0 ? (
-          <ul className="list-disc pl-5">
+          <div className="space-y-2">
             {applications.map((request) => (
-              <li key={request.id} className="text-gray-700">
-                Aravt #{request.aravt_id} - {String(request.text)}
-              </li>
+              <div key={request.id} className="rounded-md border px-3 py-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium">
+                    {request.aravt_name ?? 'Aravt'} <span className="text-muted-foreground">(№{request.aravt_id})</span>
+                  </p>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground break-words">
+                  {request.text}
+                </p>
+              </div>
             ))}
-          </ul>
+          </div>
         ) : (
-          <p className="text-gray-500">No requests to join from other Aravts</p>
+            <p className="text-gray-500">You haven’t submitted any join requests yet.</p>
         )}
       </div>}
-
-      
-
-
 
       <div>
         <button 

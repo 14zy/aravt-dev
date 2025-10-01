@@ -1,5 +1,7 @@
 import {
-  Aravt,
+  ApplicationsGroupedListOut,
+  AravtDetails,
+  AravtListItem,
   CreateAravt,
   CreateOffer,
   JoinRequest,
@@ -10,6 +12,7 @@ import {
   Task,
   TaskCompletion,
   User,
+  UserSelf,
   UserSkill,
 } from '@/types';
 import type { AxiosError } from 'axios';
@@ -60,7 +63,7 @@ export const api = {
   //   return response.data
   // },
 
-  async who_am_i(): Promise<User> {
+  async who_am_i(): Promise<UserSelf> {
     const response = await axios.get('/who_am_i');
     return response.data;
   },
@@ -112,11 +115,9 @@ export const api = {
     return response.data;
   },
 
-  async users_user_let_create_aravt(user_id: number): Promise<MessageResponse> {
-    const response = await axios.put(
-      '/users/user/' + `${user_id}` + '/let_create_aravt'
-    );
-    return response.data;
+  async users_user_let_create_aravt(user_id: number, aravt_id: number): Promise<MessageResponse> {
+    const res = await axios.put(`/users/user/${user_id}/let_create_aravt/${aravt_id}`);
+    return res.data;
   },
 
   async users_subscriptions(): Promise<User[]> {
@@ -124,34 +125,34 @@ export const api = {
     return response.data;
   },
 
-  async aravt(): Promise<Aravt[]> {
+  async aravt(): Promise<AravtListItem[]> {
     const response = await axios.get('/aravt/');
     return response.data;
   },
 
-  async aravt_aravt(aravt_id: number): Promise<Aravt> {
+  async aravt_aravt(aravt_id: number): Promise<AravtDetails> {
     const response = await axios.get('/aravt/' + `${aravt_id}`);
     return response.data;
   },
 
-  async aravt_create_aravt(data: CreateAravt): Promise<Aravt> {
+  async aravt_create_aravt(data: CreateAravt): Promise<unknown> {
     const response = await axios.post('/aravt/create_aravt/', data);
     return response.data;
   },
 
   async aravt_join(
     aravt_id: number,
-    data: { aravt_id: number; text: string }
+    text: string
   ): Promise<MessageResponse> {
     const response = await axios.post(
       '/aravt/' + `${aravt_id}` + '/join',
-      data
+      { text }
     );
     return response.data;
   },
 
-  async aravt_drop_user(user_id: number): Promise<MessageResponse> {
-    const response = await axios.delete('/aravt/drop_user/' + `${user_id}`);
+  async aravt_drop_user(aravt_id: number, user_id: number): Promise<MessageResponse> {
+    const response = await axios.delete(`/aravt/${aravt_id}/drop_user/${user_id}`);
     return response.data;
   },
 
@@ -160,7 +161,7 @@ export const api = {
     return response.data;
   },
 
-  async check_my_applications(): Promise<JoinRequest[]> {
+  async check_my_applications(): Promise<ApplicationsGroupedListOut> {
     const response = await axios.get('/aravt/check_my_applications/');
     return response.data;
   },
@@ -187,12 +188,12 @@ export const api = {
     description: string;
     aravt_id: number;
   }): Promise<MessageResponse> {
-    const response = await axios.put('/aravt/set_description', data);
-    return response.data;
+    const res = await axios.put('/aravt/' + `${data.aravt_id}` + '/set_description', { description: data.description });
+    return res.data;
   },
 
-  async tasks_set_task(data: Omit<Task, 'id'>): Promise<MessageResponse> {
-    const response = await axios.post('/tasks/set_task/', data);
+  async tasks_set_task(aravt_id: number, data: Omit<Task, 'id'>): Promise<MessageResponse> {
+    const response = await axios.post(`/tasks/${aravt_id}/set_task/`, data);
     return response.data;
   },
 
@@ -206,7 +207,7 @@ export const api = {
   },
 
   async tasks_get_task(task_id: number): Promise<Task> {
-    const response = await axios.get('/tasks/id' + `${task_id}`);
+    const response = await axios.get(`/tasks/${task_id}`);
     return response.data;
   },
 
@@ -230,7 +231,7 @@ export const api = {
     task_completion_id: number
   ): Promise<TaskCompletion> {
     const response = await axios.get(
-      '/tasks/completions_for_task_' + `${task_completion_id}`
+      `/tasks/completions_for_task/${task_completion_id}`
     );
     return response.data;
   },
@@ -254,15 +255,16 @@ export const api = {
   },
 
   async aravt_set_business(
+    aravt_id: number,
     data: Omit<Project, 'id'>
   ): Promise<MessageResponse> {
-    const response = await axios.post('/aravt/set_business/', data);
-    return response.data;
+    const res = await axios.post(`/aravt/${aravt_id}/set_business/`, data);
+    return res.data;
   },
 
-  async aravt_set_offer(data: CreateOffer): Promise<MessageResponse> {
-    const response = await axios.post('/aravt/set_offer/', data);
-    return response.data;
+  async aravt_set_offer(aravt_id: number, data: CreateOffer): Promise<MessageResponse> {
+    const res = await axios.post(`/aravt/${aravt_id}/set_offer/`, data);
+    return res.data;
   },
 
   async offers(): Promise<Offer[]> {
@@ -279,48 +281,20 @@ export const api = {
     return await axios.get('/logout/');
   },
 
-  async login_with_wallet(wallet_address: string): Promise<{
-    access_token: string;
-    token_type: 'bearer';
-    user: Pick<User, 'id' | 'username' | 'email'>;
-  }> {
-    const response = await axios.post('/login_with_wallet/', {
-      wallet_address,
-    });
-    return response.data;
-  },
-
   async link_wallet(user_id: number, wallet_address: string): Promise<User> {
-    const response = await axios.post(`/link_wallet/${user_id}`, {
-      wallet_address,
+    const response = await axios.post(`/link_wallet/${user_id}`, null, {
+      params: { wallet_address },
     });
     return response.data;
   },
 
-  async send_invitation(email: string): Promise<MessageResponse> {
-    const response = await axios.post('/aravt/invite/', {
+  async send_invitation(email: string, aravt_id: number): Promise<MessageResponse> {
+    const response = await axios.post(`/aravt/${aravt_id}/invite/`, {
       email,
       // aravt_id: aravtId,
       // referrer_id: referrerId
     });
     return response.data;
-  },
-
-  async resend_confirmation_email(data: {
-    email: string;
-  }): Promise<MessageResponse> {
-    try {
-      const response = await axios.post('/resend_confirmation_email/', data);
-      return response.data;
-    } catch (err: unknown) {
-      const error = err as AxiosError<{ detail?: string; message?: string }>;
-      const detailMessage =
-        error.response?.data?.detail || error.response?.data?.message;
-      if (detailMessage) {
-        throw new Error(detailMessage);
-      }
-      throw err;
-    }
   },
 
   async link_telegram(token: string): Promise<MessageResponse> {

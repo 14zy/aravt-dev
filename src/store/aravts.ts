@@ -1,6 +1,6 @@
-import { create } from 'zustand'
-import { Aravt, CreateAravt } from '@/types'
-import { api } from '@/lib/api'
+import { api } from '@/lib/api';
+import { Aravt, CreateAravt } from '@/types';
+import { create } from 'zustand';
 
 interface AravtsState {
   aravts: Aravt[];
@@ -41,7 +41,7 @@ export const useAravtsStore = create<AravtsState>((set) => ({
   applyToAravt: async (aravtId: number, text: string) => {
     set({ isLoading: true, error: null });
     try {
-      await api.aravt_join(aravtId, { aravt_id: aravtId, text: text });
+      await api.aravt_join(aravtId, text);
       set({ isLoading: false });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Failed to apply to aravt', isLoading: false });
