@@ -1,8 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, Home, CreditCard, Star, Coins, CalendarClock, Link as LinkIcon, Briefcase } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Task } from '@/types';
+import { Briefcase, CalendarClock, Coins, Globe, Home, Link as LinkIcon } from 'lucide-react';
 
 interface TaskCardProps {
   task: Task;
@@ -44,7 +44,7 @@ export const TaskCard = ({ task, onUpdate, onDelete, isLoading }: TaskCardProps)
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <span>Project:</span>
               <a 
-                href={task.business.link} 
+                href={task.business.link ?? '#'} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-blue-500 hover:underline flex items-center gap-1"

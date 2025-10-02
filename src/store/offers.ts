@@ -1,13 +1,13 @@
-import { create } from 'zustand'
-import { Offer, CreateOffer } from '@/types'
-import { api } from '@/lib/api'
+import { api } from '@/lib/api';
+import { CreateOffer, Offer } from '@/types';
+import { create } from 'zustand';
 
 interface OffersState {
   offers: Offer[];
   isLoading: boolean;
   error: string | null;
   fetchOffers: () => Promise<void>;
-  createOffer: (offer: CreateOffer) => Promise<void>;
+  createOffer: (aravtId: number, offer: CreateOffer) => Promise<void>;
 }
 
 export const useOffersStore = create<OffersState>((set, get) => {
@@ -28,10 +28,10 @@ export const useOffersStore = create<OffersState>((set, get) => {
       }
     },
 
-    createOffer: async (offer: CreateOffer) => {
+    createOffer: async (aravtId: number, offer: CreateOffer) => {
       set({ isLoading: true, error: null });
       try {
-        await api.aravt_set_offer(offer);
+        await api.aravt_set_offer(aravtId, offer);
         await get().fetchOffers();
         set({ isLoading: false });
       } catch (err) {

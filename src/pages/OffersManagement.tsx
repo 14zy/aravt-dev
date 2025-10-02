@@ -1,9 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useOffersStore } from '@/store/offers'
-import { useProjectsStore } from '@/store/projects'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -14,14 +10,20 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Offer, Project, CreateOffer } from '@/types'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { Textarea } from '@/components/ui/textarea'
+import { useSelectedAravt } from '@/hooks/useSelectedAravt'
+import { useAuthStore } from '@/store/auth'
+import { useOffersStore } from '@/store/offers'
+import { useProjectsStore } from '@/store/projects'
+import { CreateOffer, Offer, Project } from '@/types'
+import { Plus } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useAuthStore } from '@/store/auth';
 
 const OffersManagement = () => {
-  const { user, aravt } = useAuthStore();
+  const { user } = useAuthStore();
+  const { currentAravtId } = useSelectedAravt();
   const { offers, isLoading, error, fetchOffers } = useOffersStore()
   const { projects, isLoading: projectsLoading, fetchProjectsForAravt } = useProjectsStore()
   const [searchParams] = useSearchParams();
@@ -32,10 +34,10 @@ const OffersManagement = () => {
   }, [fetchOffers])
 
   useEffect(() => {
-    if (user && aravt) {
-      fetchProjectsForAravt(aravt.id)
+    if (user && currentAravtId) {
+      fetchProjectsForAravt(currentAravtId)
     }
-  }, [user, fetchProjectsForAravt])
+  }, [user, currentAravtId, fetchProjectsForAravt])
 
   if (isLoading || projectsLoading) {
     return <LoadingSpinner />
@@ -128,6 +130,7 @@ function OfferCard({ offer }: { offer: Offer }) {
 function CreateOfferDialog({ projects }: { projects: Project[] }) {
   const [isLimited, setIsLimited] = useState(false)
   const { createOffer } = useOffersStore()
+  const { currentAravtId } = useSelectedAravt()
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -144,7 +147,10 @@ function CreateOfferDialog({ projects }: { projects: Project[] }) {
       assets: {}
     }
 
-    await createOffer(newOffer)
+    if (!currentAravtId) {
+      return
+    }
+    await createOffer(currentAravtId, newOffer)
   }
 
   return (

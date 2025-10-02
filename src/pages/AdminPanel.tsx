@@ -1,24 +1,25 @@
-import { useEffect, useState } from 'react';
-import { Plus, Users, Settings, Globe, Wallet, AlertCircle, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MemberCard } from '@/components/admin/MemberCard';
+import { RequestCard } from '@/components/admin/RequestCard';
+import { StatsCard } from '@/components/admin/StatsCard';
+import { TaskManagementCard } from '@/components/admin/TaskManagementCard';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useSelectedAravt } from '@/hooks/useSelectedAravt';
 import { useAdminStore } from '@/store/admin';
 import { useAuthStore } from '@/store/auth';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { StatsCard } from '@/components/admin/StatsCard';
-import { RequestCard } from '@/components/admin/RequestCard';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MemberCard } from '@/components/admin/MemberCard';
-import { TaskManagementCard } from '@/components/admin/TaskManagementCard';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
+import { AlertCircle, Globe, Plus, Search, Settings, Users, Wallet } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-import { Task } from '@/types'
+import { Task } from '@/types';
 
 const AdminPanel = () => {
   const { user } = useAuthStore();
@@ -28,10 +29,10 @@ const AdminPanel = () => {
     pendingRequests, 
     isLoading, 
     error,
-    fetchAdminData,
+    fetchAravtData,
+    fetchAravtApplications,
     approveRequest,
     rejectRequest,
-    updateMemberRole,
     removeMember,
     tasks,
     createTask,
@@ -41,11 +42,18 @@ const AdminPanel = () => {
     updateSettings
   } = useAdminStore();
 
+  const { currentAravtId, firstAravtId } = useSelectedAravt();
+  const effectiveAravtId = currentAravtId ?? firstAravtId;
+  const canManage = !!(user?.aravts?.some(link => link.is_leader_of_aravt && (!effectiveAravtId || link.aravt.id === effectiveAravtId)));
+
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
 
   useEffect(() => {
-    fetchAdminData();
-  }, [fetchAdminData]);
+    if (effectiveAravtId) {
+      void fetchAravtData(effectiveAravtId);
+      void fetchAravtApplications(effectiveAravtId);
+    }
+  }, [effectiveAravtId, fetchAravtData, fetchAravtApplications]);
 
 
   const [createTaskForm, setCreateTaskForm] = useState<Omit<Task, 'id'>>({
@@ -57,7 +65,7 @@ const AdminPanel = () => {
     reward_type: 'AT',
     is_done: false,
     link: '',
-    definition_of_done: '',
+    definition_of_done: {},
     responsible_users_ids: [],
     priority: 'low',
     one_time: false,
@@ -78,7 +86,7 @@ const AdminPanel = () => {
       is_global: createTaskForm.is_global,
       is_done: false,
       link: '',
-      definition_of_done: '',
+      definition_of_done: {},
       responsible_users_ids: [],
       priority: createTaskForm.priority,
       one_time: createTaskForm.one_time,
@@ -98,7 +106,7 @@ const AdminPanel = () => {
       reward_type: 'AT',
       is_done: false,
       link: '',
-      definition_of_done: '',
+      definition_of_done: {},
       responsible_users_ids: [],
       priority: 'low',
       one_time: false,
@@ -110,9 +118,8 @@ const AdminPanel = () => {
     });
   };
 
-
-
-  if (!user || !['SuperAdmin', 'AravtLeader'].includes(user.role)) {
+  // TODO: заменить на проверку прав с бэкенда, когда появятся роли пользователя на уровне API
+  if (!user || !canManage) {
     return (
       <div className="p-8">
         <Alert variant="destructive">
@@ -255,10 +262,10 @@ const AdminPanel = () => {
                   {members.map((member) => (
                     <MemberCard
                       key={member.id}
-                      isLeader={user.is_leader_of_aravt}
+                      canManage={canManage}
+                      aravtId={effectiveAravtId ?? 0}
                       member={member}
-                      onUpdateRole={updateMemberRole}
-                      onRemoveMember={removeMember}
+                      onRemoveMember={(userId) => { if (!effectiveAravtId) return; void removeMember(userId, effectiveAravtId); }}
                       isLoading={isLoading}
                     />
                   ))}
@@ -596,7 +603,7 @@ const AdminPanel = () => {
                 <Input 
                   type="date"
                   value={createTaskForm.date_time}
-                  onChange={(e) => setCreateTaskForm(prev => ({ ...prev, deadline: e.target.value }))}
+                  onChange={(e) => setCreateTaskForm(prev => ({ ...prev, date_time: e.target.value }))}
                 />
               </div>
             </div>
@@ -610,7 +617,7 @@ const AdminPanel = () => {
                   value={createTaskForm.reward}
                   onChange={(e) => setCreateTaskForm(prev => ({ 
                     ...prev, 
-                    rewardAmount: parseInt(e.target.value) 
+                    reward: parseInt(e.target.value) 
                   }))}
                 />
               </div>

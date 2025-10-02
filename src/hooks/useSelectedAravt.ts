@@ -1,12 +1,12 @@
 import { useAravtsStore } from '@/store/aravts';
 import { useAuthStore } from '@/store/auth';
-import type { UserAravtLink } from '@/types';
+import type { AravtDetails, UserAravtLink } from '@/types';
 import { useEffect, useMemo } from 'react';
 
 export interface UseSelectedAravtResult {
   currentAravtId?: number;
   firstAravtId?: number;
-  currentAravt: ReturnType<typeof useAravtsStore>['aravtDetails'];
+  currentAravt: AravtDetails | null;
   setCurrentAravtId: (id: number | undefined) => void;
   options: Array<{ id: number; name: string }>
 }

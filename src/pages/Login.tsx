@@ -48,7 +48,7 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
       if (referralInfo?.aravtId) {
         useAuthStore.getState().setReferralInfo(null);
         navigate(`/aravts/${referralInfo.aravtId}`);
-      } else if (current_user.aravt) {
+      } else if ((current_user.aravts ?? []).length > 0) {
         navigate('/dashboard');
       } else {
         navigate('/browse');

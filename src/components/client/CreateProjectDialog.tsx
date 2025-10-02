@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus } from 'lucide-react';
 import { useProjectsStore } from '@/store/projects';
 import { Project, ProjectStatus } from '@/types';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { Plus } from 'lucide-react';
+import { useState } from 'react';
 
 export function CreateProjectDialog({ aravt_id }: { aravt_id: number }) {
   const [open, setOpen] = useState(false);
@@ -22,15 +22,16 @@ export function CreateProjectDialog({ aravt_id }: { aravt_id: number }) {
       name: formData.get('name') as string,
       description: formData.get('description') as string,
       link: formData.get('link') as string,
+      fundings: null,
       logo: formData.get('logo') as string,
-      Status: 'Not Posted' as ProjectStatus,
+      status: 'BusinessStatus.NotPosted' as ProjectStatus,
       location: formData.get('location') as string,
-      tasks: []
     };
 
     if (includeFunding) {
       const amount = formData.get('fundingAmount') as string;
-      const currency = formData.get('fundingCurrency') as string;
+      // TODO: add currency to API
+      // const currency = formData.get('fundingCurrency') as string;
       
       if (amount) {
         newProject.fundings = amount;

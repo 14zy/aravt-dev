@@ -1,9 +1,9 @@
-import { useEffect, useRef } from 'react';
+import { AravtListItem } from '@/types';
 import * as d3 from 'd3';
-import { Aravt } from '@/types';
+import { useEffect, useRef } from 'react';
 
 interface AravtRadialTreeProps {
-  aravts: Aravt[];
+  aravts: AravtListItem[];
 }
 
 interface TreeNode {
@@ -107,7 +107,7 @@ const AravtRadialTree = ({ aravts }: AravtRadialTreeProps) => {
   };
 
   // Build hierarchy from flat aravts array
-  const buildHierarchy = (aravts: Aravt[]): TreeNode => {
+  const buildHierarchy = (aravts: AravtListItem[]): TreeNode => {
     // Create a root node
     const root: TreeNode = { id: 0, name: 'All Aravts', children: [] };
     
@@ -125,23 +125,24 @@ const AravtRadialTree = ({ aravts }: AravtRadialTreeProps) => {
     });
     
     // Second pass: establish parent-child relationships
-    aravts.forEach(aravt => {
-      const node = nodesMap.get(aravt.id);
-      if (node) {
-        if (aravt.aravt_father) {
-          // Add to parent's children
-          const parentNode = nodesMap.get(aravt.aravt_father.id);
-          if (parentNode && parentNode.children) {
-            parentNode.children.push(node);
-          }
-        } else {
-          // No parent, add to root
-          if (root.children) {
-            root.children.push(node);
-          }
-        }
-      }
-    });
+    // TODO: add parent-child relationships to new API
+    // aravts.forEach(aravt => {
+    //   const node = nodesMap.get(aravt.id);
+    //   if (node) {
+    //     if ((aravt.aravt_father) {
+    //       // Add to parent's children
+    //       const parentNode = nodesMap.get(aravt.aravt_father.id);
+    //       if (parentNode && parentNode.children) {
+    //         parentNode.children.push(node);
+    //       }
+    //     } else {
+    //       // No parent, add to root
+    //       if (root.children) {
+    //         root.children.push(node);
+    //       }
+    //     }
+    //   }
+    // });
     
     return root;
   };

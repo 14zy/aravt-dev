@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Users, ArrowLeft } from 'lucide-react';
-import { useAravtsStore } from '@/store/aravts';
-import { useAuthStore } from '@/store/auth';
+import JoinRequestForm from '@/components/client/JoinRequestForm';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import JoinRequestForm from '@/components/client/JoinRequestForm';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAravtsStore } from '@/store/aravts';
+import { useAuthStore } from '@/store/auth';
+import type { AravtDetails as AravtDetailsType, AravtMember, Project } from '@/types';
+import { Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { Aravt } from '@/types';
 
 const AravtDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,7 +19,7 @@ const AravtDetails = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { fetchAravtDetails, applyToAravt } = useAravtsStore();
   const user = useAuthStore(state => state.user);
-  const [aravtDetails, setAravtDetails] = useState<Aravt | null>(null);
+  const [aravtDetails, setAravtDetails] = useState<AravtDetailsType | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -68,7 +68,8 @@ const AravtDetails = () => {
     );
   }
 
-  const canJoin = !user?.aravt?.id && !isJoining;
+  const aravtIdNum = id ? parseInt(id) : undefined;
+  const canJoin = !user?.aravts?.some(link => link.aravt.id === (aravtIdNum ?? -1)) && !isJoining;
 
   return (
     <div className="max-w-6xl mx-auto p-8 space-y-6">
@@ -118,10 +119,10 @@ const AravtDetails = () => {
           <CardContent>
             <div className="flex items-center gap-3">
               <Avatar>
-                <AvatarFallback>{aravtDetails.leader.username[0]}</AvatarFallback>
+                <AvatarFallback>{aravtDetails.leader?.username?.[0] ?? '?'}</AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-medium">{aravtDetails.leader.username}</p>
+                <p className="font-medium">{aravtDetails.leader?.username ?? '—'}</p>
                 <p className="text-sm text-gray-500">Aravt Leader</p>
               </div>
             </div>
@@ -135,14 +136,15 @@ const AravtDetails = () => {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
-              {aravtDetails.team.map(member => (
+              {aravtDetails.team.map((member: AravtMember) => (
                 <div key={member.id} className="flex items-center gap-3">
                   <Avatar>
                     <AvatarFallback>{member.username[0]}</AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-medium">{member.username}</p>
-                    <p className="text-sm text-gray-500">{member.role}</p>
+                    {/* TODO: отобразить роль из API, когда появится; временно показываем статус лидера */}
+                    <p className="text-sm text-gray-500">{member.is_leader_of_aravt ? 'Leader' : 'Member'}</p>
                   </div>
                 </div>
               ))}
@@ -151,7 +153,8 @@ const AravtDetails = () => {
         </Card>
 
         {/* Skills */}
-        {aravtDetails.skills?.length > 0 && (
+        {/* TODO: вернуть блок навыков, когда API снова начнет возвращать skills */}
+        {/* {aravtDetails.skills?.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Skills</CardTitle>
@@ -166,17 +169,17 @@ const AravtDetails = () => {
               </div>
             </CardContent>
           </Card>
-        )}
+        )} */}
 
         {/* Projects */}
-        {aravtDetails.business?.length > 0 && (
+        {(aravtDetails.business ?? []).length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Projects</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">
-                {aravtDetails.business.map(project => (
+                {(aravtDetails.business as Project[]).map((project: Project) => (
                   <Card key={project.id}>
                     <CardContent className="pt-6">
                       <div className="flex justify-between items-start">
@@ -184,7 +187,7 @@ const AravtDetails = () => {
                           <h3 className="font-semibold">{project.name}</h3>
                           <p className="text-sm text-gray-500">{project.description}</p>
                         </div>
-                        <Badge>{project.Status}</Badge>
+                        <Badge>{project.status === 'BusinessStatus.Posted' ? 'Active' : 'Not Posted'}</Badge>
                       </div>
                     </CardContent>
                   </Card>

@@ -103,7 +103,7 @@ const QuickActions = () => (
 
 const AravtDashboard = () => {
   const { stats, isLoading: dashboardLoading, error: dashboardError, fetchDashboardData } = useDashboardStore();
-  const { fetchAravtDetails, aravtDetails, isLoading: aravtLoading } = useAravtsStore();
+  const { aravtDetails, isLoading: aravtLoading } = useAravtsStore();
   const user = useAuthStore(state => state.user);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const params = useParams();
@@ -137,6 +137,8 @@ const AravtDashboard = () => {
     return <LoadingSpinner />;
   }
 
+  const businessProjects = aravtDetails?.business ?? [];
+
   return (
     <div className="mx-auto py-4 px-3 space-y-4">
       <div className=" items-center">
@@ -166,11 +168,14 @@ const AravtDashboard = () => {
         </CardHeader>
         <CardContent className="space-y-2">
           <p className="text-sm text-muted-foreground">{aravtDetails?.description}</p>
-          <div className="flex flex-wrap gap-1">
-            {aravtDetails?.skills?.map((skill, i) => (
-              <Badge key={i} variant="outline" className="text-xs">{skill}</Badge>
-            ))}
-          </div>
+          {/*
+            TODO: вернуть навыки, когда API снова начнет возвращать skills
+            <div className="flex flex-wrap gap-1">
+              {aravtDetails?.skills?.map((skill: string, i: number) => (
+                <Badge key={i} variant="outline" className="text-xs">{skill}</Badge>
+              ))}
+            </div>
+          */}
         </CardContent>
       </Card>
 
@@ -203,10 +208,10 @@ const AravtDashboard = () => {
         <CardContent>
           <div className="flex items-center gap-2">
             <Avatar className="h-6 w-6">
-              <AvatarFallback className="text-xs">{aravtDetails?.leader.username[0]}</AvatarFallback>
+              <AvatarFallback className="text-xs">{aravtDetails?.leader?.username ?? '?'}</AvatarFallback>
             </Avatar>
             <div className="text-left">
-              <p className="text-sm font-medium">{aravtDetails?.leader.username}</p>
+              <p className="text-sm font-medium">{aravtDetails?.leader?.username ?? '—'}</p>
               <p className="text-xs text-muted-foreground">Aravt Leader</p>
             </div>
           </div>
@@ -225,11 +230,11 @@ const AravtDashboard = () => {
           <CardContent className="space-y-4">
             
 
-            {aravtDetails.business?.length > 0 && (
+            {businessProjects.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium text-gray-500">Projects</h4>
                 <div className="grid gap-2 mt-2">
-                  {aravtDetails.business.map((project: Project) => (
+                  {businessProjects.map((project: Project) => (
                     <Card key={project.id} className="p-4">
                       <div className="">
                         <div>
