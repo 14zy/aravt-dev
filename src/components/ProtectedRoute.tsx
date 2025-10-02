@@ -1,13 +1,13 @@
-import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth';
 import { useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+  const authorized = useAuthStore(state => Boolean(state.isAuthenticated || state.user || state.token));
   const location = useLocation();
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     }
   }, [location]);
 
-  if (!isAuthenticated) {
+  if (!authorized) {
     return <Navigate to={`/login${location.search}`} state={{ from: location }} replace />;
   }
 

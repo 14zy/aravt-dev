@@ -1,16 +1,14 @@
-import { useEffect, useState } from 'react';
-import { Search, List, Network } from 'lucide-react';
+import AravtCard from '@/components/client/AravtCard';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import AravtRadialTree from '@/components/visualizations/AravtRadialTree';
 import { useAravtsStore } from '@/store/aravts';
 import { useAuthStore } from '@/store/auth';
-import AravtCard from '@/components/client/AravtCard';
-import { Card } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import AravtRadialTree from '@/components/visualizations/AravtRadialTree';
-import { Aravt } from '@/types';
+import { List, Network, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const BrowseAravts = () => {
   const { aravts, isLoading, error, fetchAravts } = useAravtsStore();
@@ -22,10 +20,12 @@ const BrowseAravts = () => {
     fetchAravts();
   }, [fetchAravts]);
 
+  const q = searchQuery.toLowerCase();
   const filteredAravts = aravts.filter(aravt => 
-    aravt.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    aravt.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    aravt.skills?.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()))
+    aravt.name?.toLowerCase().includes(q) ||
+    aravt.description?.toLowerCase().includes(q)
+    // TODO: вернуть фильтрацию по навыкам, когда API снова начнет возвращать skills
+    // || aravt.skills?.some((skill: string) => skill.toLowerCase().includes(q))
   );
 
   if (isLoading && !aravts.length) {
@@ -35,7 +35,7 @@ const BrowseAravts = () => {
   return (
     <div className="w-full max-w-6xl mx-auto p-8 space-y-8">
       {/* Welcome Message - Only show if user is not in an Aravt */}
-      {!user?.aravt?.id && (
+      {!(user?.aravts && user.aravts.length > 0) && (
       <Card className="bg-blue-50 border-none p-6">
         <div className="flex items-center gap-2 mb-2">
         <span className="text-2xl">👋</span>

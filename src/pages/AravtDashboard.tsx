@@ -1,19 +1,22 @@
-import { useEffect, useState } from 'react';
-import { 
-  Bell, Settings, CreditCard, Star, Users, 
-  Briefcase, ListTodo, ChevronRight, MessageCircle 
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import CreateAravtForm from '@/components/client/CreateAravtForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useDashboardStore } from '@/store/dashboard';
-import { useAuthStore } from '@/store/auth';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import CreateAravtForm from '@/components/client/CreateAravtForm';
-import { useAravtsStore } from '@/store/aravts';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Progress } from '@/components/ui/progress';
+import useSelectedAravt from '@/hooks/useSelectedAravt';
+import { useAravtsStore } from '@/store/aravts';
+import { useAuthStore } from '@/store/auth';
+import { useDashboardStore } from '@/store/dashboard';
+import type { AravtOffer, Project, UserShort } from '@/types';
+import {
+  ListTodo,
+  Users
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const StatCard = ({ title, value, icon: Icon, progress }: {
   title: string;
@@ -100,28 +103,48 @@ const QuickActions = () => (
 
 const AravtDashboard = () => {
   const { stats, isLoading: dashboardLoading, error: dashboardError, fetchDashboardData } = useDashboardStore();
-  const { fetchAravtDetails, aravtDetails, isLoading: aravtLoading } = useAravtsStore();
+  const { aravtDetails, isLoading: aravtLoading } = useAravtsStore();
   const user = useAuthStore(state => state.user);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const params = useParams();
+  const navigate = useNavigate();
+  const { currentAravtId, setCurrentAravtId, currentAravt } = useSelectedAravt();
+
+  const urlAravtId = useMemo((): number | undefined => {
+    if (!params.aravtId) return undefined;
+    const parsed = Number(params.aravtId);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }, [params.aravtId]);
+
+  const canCreateAravt = useMemo((): boolean => {
+    if (!user?.aravts || user.aravts.length === 0) return false;
+    if (currentAravtId) {
+      return user.aravts.some(link => link.aravt.id === currentAravtId && link.able_to_create_aravt);
+    }
+    return user.aravts.some(link => link.able_to_create_aravt);
+  }, [user?.aravts, currentAravtId]);
 
   useEffect(() => {
     fetchDashboardData();
-    // Fetch aravt details if user is in an aravt
-    if (user?.aravt?.id) {
-      fetchAravtDetails(user.aravt.id);
+    if (urlAravtId && urlAravtId !== currentAravtId) {
+      setCurrentAravtId(urlAravtId);
+    } else if (!currentAravtId && user?.aravts?.length) {
+      navigate(`/dashboard/${user.aravts[0].aravt.id}`, { replace: true });
     }
-  }, [fetchDashboardData, fetchAravtDetails, user?.aravt_id]);
+  }, [fetchDashboardData, urlAravtId, currentAravtId, setCurrentAravtId, navigate, user?.aravts]);
 
   if (dashboardLoading || aravtLoading) {
     return <LoadingSpinner />;
   }
 
+  const businessProjects = aravtDetails?.business ?? [];
+
   return (
     <div className="mx-auto py-4 px-3 space-y-4">
       <div className=" items-center">
         <div>
-          <h1 className="text-2xl font-bold">{user?.aravt?.name} (№{user?.aravt?.id})</h1>
-          <p className="text-gray-500"><b>{user?.username}</b> you are in the Aravt</p>
+          <h1 className="text-2xl font-bold">{(currentAravt?.name) ?? aravtDetails?.name} (№{(currentAravt?.id) ?? aravtDetails?.id})</h1>
+          <p className="text-gray-500"><b>{user?.username}</b> dashboard</p>
         </div>
         {/* <div className="flex gap-1">
           <Button variant="outline" size="sm">
@@ -145,11 +168,14 @@ const AravtDashboard = () => {
         </CardHeader>
         <CardContent className="space-y-2">
           <p className="text-sm text-muted-foreground">{aravtDetails?.description}</p>
-          <div className="flex flex-wrap gap-1">
-            {aravtDetails?.skills?.map((skill, i) => (
-              <Badge key={i} variant="outline" className="text-xs">{skill}</Badge>
-            ))}
-          </div>
+          {/*
+            TODO: вернуть навыки, когда API снова начнет возвращать skills
+            <div className="flex flex-wrap gap-1">
+              {aravtDetails?.skills?.map((skill: string, i: number) => (
+                <Badge key={i} variant="outline" className="text-xs">{skill}</Badge>
+              ))}
+            </div>
+          */}
         </CardContent>
       </Card>
 
@@ -159,14 +185,14 @@ const AravtDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-2">
-            {aravtDetails?.team?.map(member => (
+            {aravtDetails?.team?.map((member: UserShort) => (
               <div key={member.id} className="flex items-center gap-2">
                 <Avatar className="h-6 w-6">
                   <AvatarFallback className="text-xs">{member.username[0]}</AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="text-left">
                   <p className="text-sm font-medium">{member.username}</p>
-                  <p className="text-xs text-muted-foreground">{member.role}</p>
+                  <p className="text-xs text-muted-foreground">User #{member.id}</p>
                 </div>
               </div>
             ))}
@@ -182,10 +208,10 @@ const AravtDashboard = () => {
         <CardContent>
           <div className="flex items-center gap-2">
             <Avatar className="h-6 w-6">
-              <AvatarFallback className="text-xs">{aravtDetails?.leader.username[0]}</AvatarFallback>
+              <AvatarFallback className="text-xs">{aravtDetails?.leader?.username ?? '?'}</AvatarFallback>
             </Avatar>
-            <div>
-              <p className="text-sm font-medium">{aravtDetails?.leader.username}</p>
+            <div className="text-left">
+              <p className="text-sm font-medium">{aravtDetails?.leader?.username ?? '—'}</p>
               <p className="text-xs text-muted-foreground">Aravt Leader</p>
             </div>
           </div>
@@ -204,11 +230,11 @@ const AravtDashboard = () => {
           <CardContent className="space-y-4">
             
 
-            {aravtDetails.business?.length > 0 && (
+            {businessProjects.length > 0 && (
               <div>
                 <h4 className="text-sm font-medium text-gray-500">Projects</h4>
                 <div className="grid gap-2 mt-2">
-                  {aravtDetails.business.map(project => (
+                  {businessProjects.map((project: Project) => (
                     <Card key={project.id} className="p-4">
                       <div className="">
                         <div>
@@ -228,7 +254,7 @@ const AravtDashboard = () => {
               <div>
                 <h4 className="pt-2 text-sm font-medium text-gray-500">Market Offers</h4>
                 <div className="grid gap-2 mt-2">
-                  {aravtDetails.offers.map(offer => (
+                  {aravtDetails.offers.map((offer: AravtOffer) => (
                     <Card key={offer.id} className="p-4">
                       <div className="">
                         <div>
@@ -298,7 +324,7 @@ const AravtDashboard = () => {
 
       
 
-      {user?.able_to_create_aravt && (
+      {canCreateAravt && (
         <Button 
           variant="outline" 
           size="lg" 

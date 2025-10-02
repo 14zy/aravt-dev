@@ -1,26 +1,24 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User } from '@/types';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { useUserStore } from '@/store/user';
+import { AravtMember } from '@/types';
 
 interface MemberCardProps {
-  isLeader: boolean;
-  member: User;
-  onUpdateRole: (userId: number, role: User['role']) => void;
+  canManage: boolean;
+  aravtId: number;
+  member: AravtMember;
   onRemoveMember: (userId: number) => void;
   isLoading?: boolean;
 }
 
-export const MemberCard = ({ isLeader, member, onUpdateRole, onRemoveMember, isLoading }: MemberCardProps) => {
+export const MemberCard = ({ canManage, aravtId, member, onRemoveMember, isLoading }: MemberCardProps) => {
   const { letUserCreateAravt } = useUserStore();
   // Handler for updating the ability to create Aravt
-  const handleAravtChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = event.target.checked;
+  const handleAravtChange = async () => {
     try {
-      await letUserCreateAravt(member.id); // Update API call
+      await letUserCreateAravt(member.id, aravtId);
       // Optionally, you can also update the local state or trigger a refetch
     } catch (error) {
       console.error("Failed to update Aravt permission", error);
@@ -31,6 +29,7 @@ export const MemberCard = ({ isLeader, member, onUpdateRole, onRemoveMember, isL
   const handleTasksChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.checked;
     try {
+      console.log("Not implemented: Updating Tasks permission", newValue);
       // await api.updateUserPermissions(member.id, { able_to_create_tasks: newValue }); // Update API call
       // Optionally, you can also update the local state or trigger a refetch
     } catch (error) {
@@ -50,13 +49,11 @@ export const MemberCard = ({ isLeader, member, onUpdateRole, onRemoveMember, isL
             <div>
               <div className="font-medium text-lg flex items-center gap-2">
                 {member.full_name}
-                <Badge variant={
-                  member.role === 'SuperAdmin' ? 'destructive' : 
-                  member.role === 'AravtLeader' ? 'default' : 
-                  'secondary'
-                }>
-                  {member.role}
-                </Badge>
+                {member.is_leader_of_aravt ? (
+                  <Badge variant="default">Leader</Badge>
+                ) : (
+                  <Badge variant="secondary">User</Badge>
+                )}
               </div>
               <div className="text-sm text-muted-foreground">{member.email}</div>
               {member.city && (
@@ -66,7 +63,7 @@ export const MemberCard = ({ isLeader, member, onUpdateRole, onRemoveMember, isL
           </div>
         </div>
         <div className="mt-4">
-          {isLeader && (
+          {canManage && (
             <>
             <div className="flex items-center">
                 <input 
@@ -94,11 +91,11 @@ export const MemberCard = ({ isLeader, member, onUpdateRole, onRemoveMember, isL
         <div className="mt-6 grid grid-cols-3 gap-4">
           <div>
             <div className="text-sm font-medium">Tasks</div>
-            <div className="text-2xl font-bold">0/10 {member.tasksCompleted}</div>
+            <div className="text-2xl font-bold">0/10</div>
           </div>
           <div>
             <div className="text-sm font-medium">Rating</div>
-            <div className="text-2xl font-bold">10 {member.rating}</div>
+            <div className="text-2xl font-bold">10</div>
           </div>
           {/* <div>
             <div className="text-sm font-medium">Success Rate</div>
@@ -110,11 +107,11 @@ export const MemberCard = ({ isLeader, member, onUpdateRole, onRemoveMember, isL
           </div> */}
           <div>
             <div className="text-sm font-medium">Tokens</div>
-            <div className="text-2xl font-bold">100{member.tokenBalance}</div>
+            <div className="text-2xl font-bold">100</div>
           </div>
         </div>
         <div className="mt-4 space-y-2">
-          <Select 
+          {/* <Select
             defaultValue={member.role}
             onValueChange={(value: User['role']) => onUpdateRole(member.id, value)}
             disabled={isLoading}
@@ -127,7 +124,7 @@ export const MemberCard = ({ isLeader, member, onUpdateRole, onRemoveMember, isL
               <SelectItem value="AravtLeader">Aravt Leader</SelectItem>
               <SelectItem value="SuperAdmin">Super Admin</SelectItem>
             </SelectContent>
-          </Select>
+          </Select> */}
           <Button 
             variant="outline" 
             size="sm"

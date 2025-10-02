@@ -1,21 +1,20 @@
-import { useState } from 'react';
+import JoinRequestForm from '@/components/client/JoinRequestForm';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Users } from 'lucide-react';
-import { Aravt } from '@/types';
-import JoinRequestForm from '@/components/client/JoinRequestForm';
 import { useAravtsStore } from '@/store/aravts';
+import { AravtDetails, AravtListItem, Project } from '@/types';
+import { Users } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'react-toastify';
-import { Link } from 'react-router-dom';
 
 interface AravtCardProps {
-  aravt: Aravt;
+  aravt: AravtListItem;
 }
 
 const AravtCard = ({ aravt }: AravtCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [detailedAravt, setDetailedAravt] = useState<Aravt | null>(null);
+  const [detailedAravt, setDetailedAravt] = useState<AravtDetails | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,6 +27,7 @@ const AravtCard = ({ aravt }: AravtCardProps) => {
         const details = await fetchAravtDetails(aravt.id);
         setDetailedAravt(details);
       } catch (error) {
+        console.error('Failed to load Aravt details:', error);
         toast.error('Failed to load Aravt details');
       } finally {
         setIsLoading(false);
@@ -95,9 +95,9 @@ const AravtCard = ({ aravt }: AravtCardProps) => {
               <h4 className="font-medium text-left text-sm text-gray-500">Leader</h4>
               <div className="flex items-center gap-2 mt-1">
                 <Avatar className="h-6 w-6">
-                  <AvatarFallback>{detailedAravt.leader.username[0]}</AvatarFallback>
+                  <AvatarFallback>{detailedAravt.leader?.username ?? '?'}</AvatarFallback>
                 </Avatar>
-                <span>{detailedAravt.leader.username}</span>
+                <span>{detailedAravt.leader?.username ?? '—'}</span>
               </div>
             </div>
 
@@ -134,12 +134,13 @@ const AravtCard = ({ aravt }: AravtCardProps) => {
             </div>
           )}
 
-          {detailedAravt.skills?.length > 0 && (
+          {/* skills removed in new API */}
+          {/* {detailedAravt.skills?.length > 0 && (
             <div>
               <h4 className="font-medium text-sm text-gray-500">Skills</h4>
               <div className="flex flex-wrap gap-2 mt-1">
                 {detailedAravt.skills.map((skill, index) => (
-                  <span 
+                  <span
                     key={index}
                     className="px-2 py-1 bg-gray-100 rounded-full text-sm"
                   >
@@ -148,13 +149,13 @@ const AravtCard = ({ aravt }: AravtCardProps) => {
                 ))}
               </div>
             </div>
-          )}
+          )} */}
 
-          {detailedAravt.business?.length > 0 && (
+          {detailedAravt.business && detailedAravt.business.length > 0 && (
             <div>
               <h4 className="font-medium text-sm text-gray-500">Projects</h4>
               <div className="space-y-2 mt-1">
-                {detailedAravt.business.map(project => (
+                {detailedAravt.business.map((project: Project) => (
                   <div key={project.id} className="text-sm">
                     {project.name}
                   </div>

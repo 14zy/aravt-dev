@@ -1,6 +1,6 @@
-import { create } from 'zustand'
-import { Project } from '@/types'
-import { api } from '@/lib/api'
+import { api } from '@/lib/api';
+import { Project } from '@/types';
+import { create } from 'zustand';
 
 interface ProjectsState {
   projects: Project[];
@@ -31,7 +31,7 @@ export const useProjectsStore = create<ProjectsState>((set) => {
       set({ isLoading: true, error: null });
       try {
         const user_aravt = await api.aravt_aravt(aravt_id);
-        const projects: Project[] = user_aravt.business;
+        const projects: Project[] = user_aravt.business ?? [];
         set({ projects: projects, isLoading: false });
       } catch (err) {
         set({ error: err instanceof Error ? err.message : 'Failed to fetch projects', isLoading: false });
@@ -40,7 +40,7 @@ export const useProjectsStore = create<ProjectsState>((set) => {
     createProject: async (aravt_id: number, project: Omit<Project, 'id'>) => {
       set({ isLoading: true, error: null });
       try {
-        await api.aravt_set_business(project);
+        await api.aravt_set_business(aravt_id, project);
         const { fetchProjectsForAravt } = useProjectsStore.getState();
         await fetchProjectsForAravt(aravt_id);
         set({ isLoading: false });

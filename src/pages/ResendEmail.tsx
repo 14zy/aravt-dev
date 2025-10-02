@@ -2,7 +2,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { api } from '@/lib/api'
 import { useState } from 'react'
 
 const ResendEmail = () => {
@@ -17,8 +16,9 @@ const ResendEmail = () => {
         setError(null)
         setMessage(null)
         try {
-            const res = await api.resend_confirmation_email({ email: email.trim() })
-            setMessage(res.message || 'Confirmation email has been resent if the email exists.')
+            // const res = await api.resend_confirmation_email({ email: email.trim() })
+            // setMessage(res.message || 'Confirmation email has been resent if the email exists.')
+            setMessage('Feature temporarily unavailable.')
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'Failed to resend confirmation email')
         } finally {

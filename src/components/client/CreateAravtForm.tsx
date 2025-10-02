@@ -1,19 +1,19 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAravtsStore } from '@/store/aravts';
 import { useAuthStore } from '@/store/auth';
+import { useState } from 'react';
 
 const CreateAravtForm = ({ onClose }: { onClose: () => void }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [init_user_id, setInitUserId] = useState(0);
+  const [parentAravtId] = useState<number>(0);
   const createAravt = useAravtsStore(state => state.createAravt);
   const fetchUser = useAuthStore(state => state.fetchUser);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createAravt({ name, description, init_user_id });
+      await createAravt({ name, description, aravt_father_id: parentAravtId });
       onClose();
       fetchUser();
       alert('Aravt created successfully');

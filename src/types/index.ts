@@ -3,49 +3,97 @@ export interface UserSkill extends Skill {
   experience_years: number;
 }
 
-export interface User {
+export interface UserSelf {
   id: number
   username: string
   email?: string
-  role: 'SuperAdmin' | 'AravtLeader' | 'User'
   city?: string
   date_of_birth?: string
   full_name?: string
   is_active: boolean
-  is_deleted: boolean
-  refered_by_id?: number
-  able_to_create_aravt: boolean
-  able_to_create_tasks: boolean
-  is_leader_of_aravt: boolean
-  rating?: number
-  aravt_id?: number
-  aravt?: Aravt | null
-  skills?: UserSkill[]
-  tasksCompleted?: number
-  completionRate?: number
-  tokenBalance?: number
-  is_subordinate?: boolean
-  wallet_address?: string
+  skills: UserSkill[]
+  aravts: AravtBrief[]
+  wallet_address: string | null
 }
 
-export interface Aravt {
+export interface User {
+  id: number
+  username: string
+  email?: string
+  city?: string
+  date_of_birth?: string
+  full_name?: string
+  is_active: boolean
+  skills: UserSkill[]
+  aravts: UserAravtLink[]
+  wallet_address: string | null
+}
+
+export interface AravtListItem {
   id: number;
   name: string;
   description: string;
-  user_father_id: number;
   responsible_user_id: number;
-  init_user_id: number;
   is_draft: boolean;
-  telegram_chat_link: string;
-  //aravt_father_id: number;
-  leader: User;
-  team: User[];
-  aravt_father: Aravt | null;
-  business: Project[];
-  offers: Offer[];
-  skills: string[];
-  //logo?: string;
-  wallet_address?: string;
+  wallet_address: string | null;
+}
+
+export interface UserShort {
+  id: number;
+  username: string;
+  full_name: string;
+  city: string;
+  is_active: boolean;
+  email?: string | null;
+  date_of_birth?: string | null;
+  is_deleted?: boolean;
+  refered_by_id?: number | null;
+}
+
+export interface AravtDetails {
+  id: number;
+  name: string;
+  user_father_id: number | null;
+  responsible_user_id: number | null;
+  is_draft: boolean;
+  description: string | null;
+  telegram_chat_link: string | null;
+  aravt_father: AravtShort | null;
+  leader: AravtMember | null;
+  team: AravtMember[];
+  business: Project[] | null;
+  offers: AravtOffer[];
+}
+
+export interface AravtShort {
+  id: number;
+  name: string | null;
+  user_father_id: number | null;
+  is_draft: boolean;
+}
+
+export interface AravtMember extends UserShort {
+  is_leader_of_aravt: boolean;
+  able_to_create_tasks: boolean;
+  able_to_create_aravt: boolean;
+}
+
+export interface UserAravtLink {
+  aravt: AravtShort;
+  is_leader_of_aravt: boolean;
+  able_to_create_tasks: boolean;
+  able_to_create_aravt: boolean;
+}
+
+export interface AravtBrief {
+  id: number;
+  name: string;
+  able_to_create_tasks: boolean;
+  able_to_create_aravt: boolean;
+  is_leader_of_aravt: boolean;
+  user_father_id: number;
+  is_draft: boolean;
+  wallet_address: string | null;
 }
 
 export interface Feature {
@@ -66,8 +114,11 @@ export interface RegistrationData {
   full_name: string
 }
 
-export type CreateAravt = Pick<Aravt, 'name' | 'description' | 'init_user_id'>;
-
+export interface CreateAravt {
+  name: string;
+  description: string;
+  aravt_father_id: number;
+}
 
 export interface Task {
   id: number,
@@ -76,7 +127,7 @@ export interface Task {
   link?: string,
   reward: number,
   reward_type: 'AT' | 'USDT';
-  definition_of_done: {},
+  definition_of_done: Record<string, unknown>,
   responsible_users_ids: number[],
   is_done: boolean,
   is_global: boolean
@@ -92,22 +143,28 @@ export interface Task {
   }
 }
 
-export type ProjectStatus = 'Posted' | 'Not Posted';
+export interface TasksGroupOut {
+  aravt: AravtShort;
+  tasks: Task[];
+  parents_tasks: Task[];
+  other_tasks: Task[];
+}
+
+export interface TasksGroupedListOut {
+  tasks_groups: TasksGroupOut[];
+}
+
+export type ProjectStatus = 'BusinessStatus.Posted' | 'BusinessStatus.NotPosted';
 
 export interface Project {
   id: number;
   name: string;
   description: string;
-  link: string;
-  // fundings?: {
-  //   amount: number;
-  //   currency: string;
-  // };
-  fundings?: string;
-  logo?: string;
-  Status: ProjectStatus;
+  link: string | null;
+  fundings: string | null;
+  logo: string | null;
+  status: ProjectStatus;
   location: string;
-  tasks: Task[];
 }
 
 export interface Offer {
@@ -122,10 +179,22 @@ export interface Offer {
   name: string;
   description: string;
   is_limited: boolean;
-  count_left?: number;
-  duration?: number;
+  count_left: number | null;
+  duration: number | null;
   price: number;
-  assets?: any;
+  assets: Record<string, unknown> | null;
+}
+
+export interface AravtOffer {
+  id: number;
+  business_id: number;
+  name: string;
+  description: string;
+  is_limited: boolean;
+  count_left: number | null;
+  duration: number | null;
+  price: number;
+  assets: Record<string, unknown> | null;
 }
 
 export interface CreateOffer {
@@ -136,24 +205,43 @@ export interface CreateOffer {
   count_left: number;
   duration: number;
   price: number;
-  assets: {};
+  assets: Record<string, unknown>;
 }
 
 export interface JoinRequest {
   id: number,
   aravt_id: number,
-  user: User,
-  text: {
-    application: string;
-  },
+  user: UserShort,
+  text: string,
   date_time: string
+}
+
+export interface ApplicationOut {
+  id: number;
+  aravt_id: number;
+  user: UserShort;
+  text: string;
+  date_time: string;
+}
+
+export interface ApplicationsGroupOut {
+  aravt: AravtShort;
+  applications: ApplicationOut[];
+}
+
+export interface ApplicationsGroupedListOut {
+  application_groups: ApplicationsGroupOut[];
+}
+
+export interface JoinRequestWithAravt extends JoinRequest {
+  aravt_name: string | null;
 }
 
 export interface TaskCompletion {
   id: number,
   task: Partial<Task>,
   user: Partial<User>,
-  body: {},
+  body: Record<string, unknown>,
   completed_at: string,
   is_approved: boolean,
   reward_paid: boolean

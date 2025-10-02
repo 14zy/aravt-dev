@@ -1,17 +1,17 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { CreditCard } from 'lucide-react';
-import { Banknote } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { CreateProjectDialog } from '@/components/client/CreateProjectDialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { useAuthStore } from '@/store/auth';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { useAravtsStore } from '@/store/aravts';
+import { useAuthStore } from '@/store/auth';
+import { useOffersStore } from '@/store/offers';
 import { useProjectsStore } from '@/store/projects';
 import { Project } from "@/types";
-import { CreateProjectDialog } from '@/components/client/CreateProjectDialog';
-import { useOffersStore } from '@/store/offers';
+import { Banknote } from 'lucide-react';
+import { useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const ProjectCard = ({ project }: { project: Project }) => {
   const navigate = useNavigate();
@@ -33,8 +33,8 @@ const ProjectCard = ({ project }: { project: Project }) => {
               <CardDescription>{project.description}</CardDescription>
             </div>
           </div>
-          <Badge variant={project.Status === 'Posted' ? 'default' : 'secondary'}>
-            Active {project.Status}
+          <Badge variant={project.status === 'BusinessStatus.Posted' ? 'default' : 'secondary'}>
+            Active {project.status}
           </Badge>
         </div>
       </CardHeader>
@@ -88,18 +88,28 @@ const ProjectCard = ({ project }: { project: Project }) => {
 
 const ProjectManagement = () => {
   const navigate = useNavigate();
-  const { user, aravt } = useAuthStore();
+  const { user } = useAuthStore();
+  const { currentAravtId, getFirstAravtIdForUser } = useAravtsStore();
   const { projects, isLoading, error, fetchProjectsForAravt } = useProjectsStore();
+  const { isLoading: offersLoading, fetchOffers } = useOffersStore();
+  const effectiveAravtId = useMemo(() => getFirstAravtIdForUser(user?.aravts) ?? currentAravtId, [getFirstAravtIdForUser, user?.aravts, currentAravtId]);
 
   useEffect(() => {
-    if (!user || !user.aravt?.id) {
+    if (!user) {
       navigate('/login');
       return;
     }
-    fetchProjectsForAravt(user?.aravt?.id);
-  }, [user, fetchProjectsForAravt, navigate]);
+    if (!effectiveAravtId) {
+      navigate('/browse');
+      return;
+    }
+    void Promise.all([
+      fetchProjectsForAravt(effectiveAravtId),
+      fetchOffers(),
+    ]);
+  }, [user, effectiveAravtId, fetchProjectsForAravt, fetchOffers, navigate]);
 
-  if (!user || !aravt || isLoading) {
+  if (!user || !effectiveAravtId || isLoading || offersLoading) {
     return <LoadingSpinner />;
   }
 
@@ -110,7 +120,7 @@ const ProjectManagement = () => {
           <h1 className="text-2xl text-left font-bold">Projects</h1>
           <p className="text-gray-500">Business of Aravt</p>
         </div>
-        <CreateProjectDialog aravt_id={aravt.id}/>
+        <CreateProjectDialog aravt_id={effectiveAravtId} />
       </div>
 
       {error && (

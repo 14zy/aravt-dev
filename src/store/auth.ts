@@ -1,13 +1,12 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import { User, Aravt } from '@/types'
 import { api } from '@/lib/api';
+import { User } from '@/types';
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  aravt: Aravt | null;
   referralInfo: {
     aravtId?: number;
     referredById?: number;
@@ -27,20 +26,19 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isAuthenticated: false,
-      aravt: null,
       referralInfo: null,
       fetchUser: async () => {
         const st_user = get().user;
         if (st_user) {
           const new_user = await api.users_user(st_user.id);
-          set({ user: new_user })
+          set({ user: new_user, isAuthenticated: true })
         }
       },
-      setToken: (token: string) => set({ token }),
+      setToken: (token: string) => set({ token, isAuthenticated: true }),
       login: (user: User, token: string) => 
-        set({ user, token, isAuthenticated: true, aravt: user.aravt }),
+        set({ user, token, isAuthenticated: true }),
       logout: () => 
-        set({ user: null, token: null, isAuthenticated: false, aravt: null, referralInfo: null }),
+        set({ user: null, token: null, isAuthenticated: false, referralInfo: null }),
       setReferralInfo: (data) => set({ referralInfo: data }),
       connectWallet: async (address: string) => {
         const { user } = get();
@@ -60,7 +58,7 @@ export const useAuthStore = create<AuthState>()(
           set({ 
             user: { 
               ...user, 
-              wallet_address: undefined
+              wallet_address: null
             } 
           });
         }

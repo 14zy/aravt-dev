@@ -1,34 +1,44 @@
-import { useEffect, useState } from 'react';
-import { Plus, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuthStore } from '@/store/auth';
-import { useAdminStore } from '@/store/admin';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { MemberCard } from '@/components/admin/MemberCard';
 import { RequestCard } from '@/components/admin/RequestCard';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAdminStore } from '@/store/admin';
+import { useAravtsStore } from '@/store/aravts';
+import { useAuthStore } from '@/store/auth';
+import { Plus, Search } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 const MemberManagement = () => {
   const { user } = useAuthStore(); 
+  const { currentAravtId, aravts } = useAravtsStore();
+  const { aravtId: aravtIdParam } = useParams();
+  const navigate = useNavigate();
+  const aravtId = useMemo(() => {
+    const n = Number(aravtIdParam);
+    return Number.isFinite(n) && n > 0 ? n : undefined;
+  }, [aravtIdParam]);
+  const fallbackAravtId = useMemo(() => currentAravtId ?? (aravts && aravts.length > 0 ? aravts[0].id : undefined), [currentAravtId, aravts]);
   
   const { 
     members, 
     pendingRequests, 
     isLoading, 
     error, 
-    fetchAravtData,
-    fetchAdminData,
-    updateMemberRole,
+    // updateMemberRole,
     removeMember,
+    fetchAravtData,
+    fetchAravtApplications,
     approveRequest,
     rejectRequest,
-    inviteMember
+    inviteMember,
   } = useAdminStore();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -44,24 +54,38 @@ const MemberManagement = () => {
 
     setIsInviting(true);
     try {
-      await inviteMember(email);
+      if (!aravtId) return;
+      await inviteMember(email, aravtId);
       setEmail('');
       setDialogOpen(false);
       toast.info('Please send the invitation email in your email client');
     } catch (error) {
-      // Error is handled in the store
+      console.error('Error inviting member', error);
     } finally {
       setIsInviting(false);
     }
   };
 
   useEffect(() => {
-    fetchAdminData();
-  }, [fetchAdminData]);
+    if (aravtId) {
+      fetchAravtData(aravtId);
+      fetchAravtApplications(aravtId);
+    }
+  }, [aravtId, fetchAravtData, fetchAravtApplications]);
 
+  // Мягкий редирект: если нет корректного aravtId в URL, отправляем на первый доступный
   useEffect(() => {
-    fetchAravtData();
-  }, [fetchAravtData]);
+    if (!aravtId && fallbackAravtId) {
+      navigate(`/members/${fallbackAravtId}`, { replace: true });
+    }
+  }, [aravtId, fallbackAravtId, navigate]);
+
+  // Вычисляем, является ли текущий пользователь лидером для выбранного аравта
+  const isLeader = useMemo(() => {
+    if (!user || !aravtId) return false;
+    const links = user.aravts || [];
+    return links.some(link => link.aravt?.id === aravtId && link.is_leader_of_aravt);
+  }, [user, aravtId]);
 
   if (!user) {
     return <LoadingSpinner />;
@@ -129,6 +153,10 @@ const MemberManagement = () => {
           {/* <CardTitle>Aravt Management</CardTitle> */}
         </CardHeader>
         <CardContent className="space-y-4">
+          {isLoading ? (
+            <div className="py-8 flex justify-center"><LoadingSpinner /></div>
+          ) : (
+            <>
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -166,14 +194,16 @@ const MemberManagement = () => {
             {members.map((member) => (
               <MemberCard
                 key={member.id}
-                isLeader={user?.is_leader_of_aravt}
+                canManage={isLeader}
+                aravtId={aravtId!}
                 member={member}
-                onUpdateRole={updateMemberRole}
-                onRemoveMember={removeMember}
+                onRemoveMember={(userId) => aravtId ? removeMember(userId, aravtId) : Promise.resolve()}
                 isLoading={isLoading}
               />
             ))}
           </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -182,15 +212,19 @@ const MemberManagement = () => {
           <CardTitle>Requests to Join your Aravt:</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {pendingRequests.map((application) => (
-            <RequestCard
-              key={application.id}
-              request={application}
-              onApprove={approveRequest}
-              onReject={rejectRequest}
-              isLoading={isLoading}
-            />
-          ))}
+          {isLoading ? (
+            <div className="py-8 flex justify-center"><LoadingSpinner /></div>
+          ) : (
+            pendingRequests.map((application) => (
+              <RequestCard
+                key={application.id}
+                request={application}
+                onApprove={approveRequest}
+                onReject={rejectRequest}
+                isLoading={isLoading}
+              />
+            ))
+          )}
         </CardContent>
       </Card>
 

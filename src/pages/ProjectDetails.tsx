@@ -1,18 +1,22 @@
-import { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Bell, Settings, CreditCard, Users, CalendarDays, 
-  Globe, ListChecks, Plus 
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useAuthStore } from '@/store/auth';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuthStore } from '@/store/auth';
 import { useOffersStore } from '@/store/offers';
+import {
+  Bell,
+  CalendarDays,
+  CreditCard,
+  Globe, ListChecks, Plus,
+  Settings,
+  Users
+} from 'lucide-react';
+import { useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 interface ProjectMockData {
   id: number;
@@ -70,17 +74,18 @@ const mockProject: ProjectMockData = {
 const ProjectDetails = () => {
   const { id } = useParams();
   const { user } = useAuthStore();
-  const { offers } = useOffersStore();
+  const { offers, fetchOffers, isLoading: offersLoading } = useOffersStore();
   const navigate = useNavigate();
 
   // Filter offers for this project
   const projectOffers = offers.filter(offer => offer.business.id === Number(id));
 
   useEffect(() => {
-    // TODO: Fetch project details
-  }, [id]);
+    void fetchOffers();
+    // TODO: Fetch real project details when API is ready
+  }, [fetchOffers]);
 
-  if (!user) {
+  if (!user || offersLoading) {
     return <LoadingSpinner />;
   }
 
