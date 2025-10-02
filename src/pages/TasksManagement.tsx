@@ -1,23 +1,26 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, Globe, Home } from 'lucide-react';
+import { TaskCard } from '@/components/client/TaskCard';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { api } from '@/lib/api';
+import { useAravtsStore } from '@/store/aravts';
 import { useAuthStore } from '@/store/auth';
 import { useTasksStore } from '@/store/tasks';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { TaskCard } from '@/components/client/TaskCard';
-import { api } from '@/lib/api';
-import { Project } from '@/types';
+import { Project, Task } from '@/types';
+import { Globe, Home, Plus, Search } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const TasksManagement = () => {
   const { user } = useAuthStore();
+  const { currentAravtId, getFirstAravtIdForUser } = useAravtsStore();
+  const effectiveAravtId = useMemo(() => getFirstAravtIdForUser(user?.aravts) ?? currentAravtId, [getFirstAravtIdForUser, user?.aravts, currentAravtId]);
   const { 
     localTasks, 
     globalTasks, 
@@ -34,9 +37,9 @@ const TasksManagement = () => {
 
   useEffect(() => {
     const fetchBusinesses = async () => {
-      if (user?.aravt) {
+      if (effectiveAravtId) {
         try {
-          const aravtData = await api.aravt_aravt(user.aravt.id);
+          const aravtData = await api.aravt_aravt(effectiveAravtId);
           setBusinesses(aravtData.business || []);
         } catch (error) {
           console.error('Error fetching businesses:', error);
@@ -44,7 +47,7 @@ const TasksManagement = () => {
       }
     };
     fetchBusinesses();
-  }, [user?.aravt]);
+  }, [effectiveAravtId]);
 
   const handleCreateTask = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -79,7 +82,10 @@ const TasksManagement = () => {
           num_of_approved: 0
         }
       };
-      await api.tasks_set_task(taskData);
+      if (!effectiveAravtId) {
+        throw new Error('No aravt selected');
+      }
+      await api.tasks_set_task(effectiveAravtId, taskData);
       await fetchTasksData();
       setShowCreateTaskForm(false);
     } catch (error) {
@@ -87,7 +93,7 @@ const TasksManagement = () => {
     }
   };
 
-  const filterTasks = (tasks: any[]) => {
+  const filterTasks = useCallback((tasks: Task[]) => {
     return tasks.filter(task => {
       const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           task.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -98,10 +104,10 @@ const TasksManagement = () => {
       
       return matchesSearch && matchesStatus && matchesPriority;
     });
-  };
+  }, [searchQuery, statusFilter, priorityFilter]);
 
-  const filteredLocalTasks = useMemo(() => filterTasks(localTasks), [localTasks, searchQuery, statusFilter, priorityFilter]);
-  const filteredGlobalTasks = useMemo(() => filterTasks(globalTasks), [globalTasks, searchQuery, statusFilter, priorityFilter]);
+  const filteredLocalTasks = useMemo(() => filterTasks(localTasks), [localTasks, filterTasks]);
+  const filteredGlobalTasks = useMemo(() => filterTasks(globalTasks), [globalTasks, filterTasks]);
 
   useEffect(() => {
     fetchTasksData();
@@ -109,6 +115,14 @@ const TasksManagement = () => {
 
   if (!user) {
     return <LoadingSpinner />;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-6xl mx-auto mt-0">
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   return (

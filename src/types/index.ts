@@ -53,15 +53,15 @@ export interface UserShort {
 export interface AravtDetails {
   id: number;
   name: string;
-  user_father_id: number;
-  responsible_user_id: number;
+  user_father_id: number | null;
+  responsible_user_id: number | null;
   is_draft: boolean;
-  description: string;
+  description: string | null;
   telegram_chat_link: string | null;
-  aravt_father: string[];
-  leader: UserShort;
-  team: UserShort[];
-  business: Project[];
+  aravt_father: AravtShort | null;
+  leader: AravtMember | null;
+  team: AravtMember[];
+  business: Project[] | null;
   offers: AravtOffer[];
 }
 
@@ -70,6 +70,12 @@ export interface AravtShort {
   name: string | null;
   user_father_id: number | null;
   is_draft: boolean;
+}
+
+export interface AravtMember extends UserShort {
+  is_leader_of_aravt: boolean;
+  able_to_create_tasks: boolean;
+  able_to_create_aravt: boolean;
 }
 
 export interface UserAravtLink {
@@ -137,7 +143,18 @@ export interface Task {
   }
 }
 
-export type ProjectStatus = 'Posted' | 'Not Posted';
+export interface TasksGroupOut {
+  aravt: AravtShort;
+  tasks: Task[];
+  parents_tasks: Task[];
+  other_tasks: Task[];
+}
+
+export interface TasksGroupedListOut {
+  tasks_groups: TasksGroupOut[];
+}
+
+export type ProjectStatus = 'BusinessStatus.Posted' | 'BusinessStatus.NotPosted';
 
 export interface Project {
   id: number;

@@ -1,6 +1,6 @@
-import { create } from 'zustand'
-import { api } from '@/lib/api'
-import { Task } from '@/types'
+import { api } from '@/lib/api';
+import { Task, TasksGroupedListOut } from '@/types';
+import { create } from 'zustand';
 
 interface TasksState {
   localTasks: Task[];
@@ -20,26 +20,15 @@ export const useTasksStore = create<TasksState>((set, get) => ({
   fetchTasksData: async () => {
     set({ isLoading: true, error: null });
     try {
-      let all_tasks = await api.tasks_get_tasks();
-      let other_tasks = all_tasks.other_tasks;
-      let parent_tasks = all_tasks.parent_tasks;
-      
-      const tasks: Task[] = all_tasks.tasks;
-      
-      console.log('Fetched tasks:', tasks);
-
-      if (!Array.isArray(tasks)) {
-        throw new Error('Fetched tasks is not an array');
-      }
-
-      const LocalTasks: Task[] = tasks.filter((task) => !task.is_global);
-      const GlobalTasks: Task[] = tasks.filter((task) => task.is_global);
-
-      set({ 
-        localTasks: LocalTasks,
-        globalTasks: GlobalTasks,
-        isLoading: false 
-      });
+      const grouped: TasksGroupedListOut = await api.tasks_get_tasks();
+      const all: Task[] = (grouped.tasks_groups || []).flatMap(g => [
+        ...(g.tasks || []),
+        ...(g.parents_tasks || []),
+        ...(g.other_tasks || []),
+      ]);
+      const LocalTasks: Task[] = all.filter(t => !t.is_global);
+      const GlobalTasks: Task[] = all.filter(t => t.is_global);
+      set({ localTasks: LocalTasks, globalTasks: GlobalTasks, isLoading: false });
     } catch (error) {
       if (error instanceof Error) {
         set({ error: error.message, isLoading: false });

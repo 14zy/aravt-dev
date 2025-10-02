@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { useAravtsStore } from '@/store/aravts';
 import { useAuthStore } from '@/store/auth';
 import { useUserStore } from '@/store/user';
 import type { UserAravtLink } from '@/types';
@@ -35,23 +36,24 @@ const Profile = () => {
   const searchParams = new URLSearchParams(location.search);
   const token = searchParams.get('token');
 
-  const userFromStore = useAuthStore.getState().user;
+  const authUser = useAuthStore(s => s.user);
+  const { currentAravtId, setCurrentAravtId, getFirstAravtIdForUser } = useAravtsStore();
   const aravtLinks = useMemo(() => (
-    (userFromStore?.aravts ?? []) as UserAravtLink[]
-  ), [userFromStore]);
+    (authUser?.aravts ?? []) as UserAravtLink[]
+  ), [authUser?.aravts]);
   const aravtOptions = useMemo(() => aravtLinks.map(link => ({
     id: link.aravt.id,
     name: link.aravt.name ?? `Aravt #${link.aravt.id}`,
   })), [aravtLinks]);
-  const [selectedAravtId, setSelectedAravtId] = useState<number | undefined>(undefined);
   useEffect(() => {
-    if (!selectedAravtId && aravtOptions[0]?.id) {
-      setSelectedAravtId(aravtOptions[0].id);
+    if (!currentAravtId) {
+      const first = getFirstAravtIdForUser(aravtLinks);
+      if (first) setCurrentAravtId(first);
     }
-  }, [aravtOptions, selectedAravtId]);
+  }, [currentAravtId, setCurrentAravtId, aravtLinks, getFirstAravtIdForUser]);
   const selectedAravtLink = useMemo(
-    () => aravtLinks.find(l => l.aravt.id === selectedAravtId),
-    [aravtLinks, selectedAravtId]
+    () => aravtLinks.find(l => l.aravt.id === currentAravtId),
+    [aravtLinks, currentAravtId]
   );
 
   useEffect(() => {
@@ -122,7 +124,10 @@ const Profile = () => {
               {aravtOptions.length > 1 && (
                 <div>
                   <label className="text-sm text-muted-foreground">Select Aravt</label>
-                  <Select value={selectedAravtId?.toString() ?? ''} onValueChange={(v) => setSelectedAravtId(Number(v))}>
+                  <Select value={currentAravtId?.toString() ?? ''} onValueChange={(v) => {
+                    const id = Number(v)
+                    setCurrentAravtId(id)
+                  }}>
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Choose aravt" />
                     </SelectTrigger>
@@ -140,8 +145,8 @@ const Profile = () => {
                 <p className="text-sm text-gray-500">{selectedAravtLink?.aravt.is_draft ? 'Draft' : 'Active'}</p>
               </div>
 
-              <Button asChild className="w-full" disabled={!selectedAravtId}>
-                <Link to={`/dashboard/${selectedAravtId || ''}`}>Open Dashboard</Link>
+              <Button asChild className="w-full" disabled={!currentAravtId}>
+                <Link to={`/dashboard/${currentAravtId || ''}`}>Open Dashboard</Link>
               </Button>
               <Button asChild className="w-full">
                 <Link to="https://t.me/share/url?url=https://aravt.io/">Share app</Link>

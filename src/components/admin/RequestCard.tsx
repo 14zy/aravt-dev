@@ -1,17 +1,14 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User } from '@/types'
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { UserShort } from '@/types';
 
 interface RequestCardProps {
   request: {
     id: number;
     aravt_id: number,
-    user: User;
-    text: {
-      application: string;
-    };
+    user: UserShort;
+    text: string;
     date_time: string;
   };
   onApprove: (id: number) => void;
@@ -33,14 +30,7 @@ export const RequestCard = ({ request, onApprove, onReject, isLoading }: Request
             <div className="font-medium">{request.user.full_name}</div>
             <div className="text-sm text-muted-foreground">{request.user.username}</div>
             <div className="text-sm text-muted-foreground">{request.user.email}</div>
-            <div className="text-sm text-muted-foreground">{request.text.application}</div>
-            <div className="flex gap-2 mt-2">
-              {request.user.skills?.map((skill, index) => (
-                <Badge key={index} variant="secondary">
-                  {/* {skill} */}
-                </Badge>
-              ))}
-            </div>
+            <div className="text-sm text-muted-foreground">{request.text}</div>
           </div>
         </div>
         <div>

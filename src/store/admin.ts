@@ -1,7 +1,6 @@
-import { create } from 'zustand'
-import { User, Task, Aravt, JoinRequest } from '@/types'
-import { api } from '@/lib/api'
-import { useAuthStore } from '@/store/auth'
+import { api } from '@/lib/api';
+import { AravtDetails, AravtMember, JoinRequest, Task } from '@/types';
+import { create } from 'zustand';
 
 interface AdminStats {
   totalMembers: number;
@@ -32,30 +31,27 @@ interface AravtSettings {
 
 interface AdminState {
   stats: AdminStats;
-  members: User[];
+  members: AravtMember[];
   pendingRequests: JoinRequest[];
   tasks: Task[];
-  aravt: Aravt | null;
+  aravt: AravtDetails | null;
   isLoading: boolean;
   error: string | null;
-  fetchAdminData: () => Promise<void>;
-  fetchAravtData: () => Promise<void>;
+  fetchAravtData: (aravtId: number) => Promise<void>;
+  fetchAravtApplications: (aravtId: number) => Promise<void>;
   approveRequest: (requestId: number) => Promise<void>;
   rejectRequest: (requestId: number) => Promise<void>;
-  updateMemberRole: (userId: number, role: User['role']) => Promise<void>;
-  removeMember: (userId: number) => Promise<void>;
+  updateMemberRole: (userId: number, role: string) => Promise<void>;
+  removeMember: (userId: number, aravtId: number) => Promise<void>;
   createTask: (task: Omit<Task, 'id'>) => Promise<void>;
   updateTask: (taskId: number, updates: Partial<Task>) => Promise<void>;
   deleteTask: (taskId: number) => Promise<void>;
   settings: AravtSettings;
   updateSettings: (updates: Partial<AravtSettings>) => Promise<void>;
-  inviteMember: (email: string) => Promise<void>;
+  inviteMember: (email: string, aravtId: number) => Promise<void>;
 }
 
 export const useAdminStore = create<AdminState>()((set, get) => {
-  const aravt = useAuthStore.getState().aravt as Aravt; // Access aravt from the store without using a hook
-  const user = useAuthStore.getState().user as User;
-
   return {
     stats: {
       totalMembers: 25,
@@ -89,22 +85,15 @@ export const useAdminStore = create<AdminState>()((set, get) => {
       },
     },
 
-    fetchAdminData: async () => {
+    fetchAravtData: async (aravtId: number) => {
       set({ isLoading: true, error: null });
       try {
-
-        if (user.is_leader_of_aravt) {
-          const PendingRequests: JoinRequest[] = await api.aravt_applications()
-          set({ 
-            pendingRequests: PendingRequests,
-            isLoading: false,
-          });
-        } else {
-          set({ 
-            pendingRequests: [],
-            isLoading: false,
-          });
-        }
+        const details: AravtDetails = await api.aravt_aravt(aravtId);
+        const list: AravtMember[] = [
+          ...(details.leader ? [details.leader] : []),
+          ...(details.team || []),
+        ];
+        set({ members: list, aravt: details, isLoading: false });
       } catch (error) {
         set({ 
           error: error instanceof Error ? error.message : 'Failed to fetch admin data', 
@@ -113,24 +102,23 @@ export const useAdminStore = create<AdminState>()((set, get) => {
       }
     },
 
-    fetchAravtData: async () => {
+    fetchAravtApplications: async (aravtId: number) => {
       set({ isLoading: true, error: null });
       try {
-        const user_aravt = await api.aravt_aravt(aravt.id)
-        const Aravt_Members: User[] = [user_aravt.leader, ...user_aravt.team]
-        const Members: User[] = await Promise.all(Aravt_Members.map(async member => {
-          const user = await api.users_user(member.id)          
-          return user
-        }))
-
-        set({ 
-          members: Members,
-          aravt: user_aravt,
-          isLoading: false,
-        });
+        const grouped = await api.aravt_applications_for(aravtId);
+        const pending: JoinRequest[] = (grouped.application_groups || []).flatMap(group =>
+          (group.applications || []).map(app => ({
+            id: app.id,
+            aravt_id: app.aravt_id,
+            user: app.user,
+            text: app.text as unknown as string,
+            date_time: app.date_time,
+          }))
+        );
+        set({ pendingRequests: pending, isLoading: false });
       } catch (error) {
         set({ 
-          error: error instanceof Error ? error.message : 'Failed to fetch admin data', 
+          error: error instanceof Error ? error.message : 'Failed to fetch aravt applications', 
           isLoading: false 
         });
       }
@@ -183,15 +171,16 @@ export const useAdminStore = create<AdminState>()((set, get) => {
       }
     },
 
-    updateMemberRole: async (userId: number, role: User['role']) => {
+    updateMemberRole: async (userId: number, role: string) => {
       set({ isLoading: true, error: null });
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
         
         const state = get();
-        const updatedMembers = state.members.map(member =>
-          member.id === userId ? { ...member, role } : member
-        );
+        const updatedMembers = state.members.map(member => {
+          if (member.id !== userId) return member;
+          return { ...member, role };
+        });
         set({ members: updatedMembers, isLoading: false });
       } catch (error) {
         set({ 
@@ -201,10 +190,10 @@ export const useAdminStore = create<AdminState>()((set, get) => {
       }
     },
 
-    removeMember: async (userId: number) => {
+    removeMember: async (userId: number, aravtId: number) => {
       set({ isLoading: true, error: null });
       try {
-        await api.aravt_drop_user(userId);
+        await api.aravt_drop_user(aravtId, userId);
         const state = get();
         const updatedMembers = state.members.filter(member => member.id !== userId);
         set({ 
@@ -223,22 +212,11 @@ export const useAdminStore = create<AdminState>()((set, get) => {
       }
     },
 
-    createTask: async (task) => {
+    createTask: async () => {
       set({ isLoading: true, error: null });
       try {
-        await api.tasks_set_task(task)
-
-        let all_tasks = await api.tasks_get_tasks();
-        // TODO:
-        let other_tasks = all_tasks.other_tasks;
-        let parent_tasks = all_tasks.parent_tasks;
-
-        const tasks = all_tasks.tasks;
-        
-        set({
-          tasks: tasks,
-          isLoading: false,
-        });
+        // TODO: подключить актуальный эндпоинт задач при необходимости
+        set({ isLoading: false });
       } catch (error) {
         set({ 
           error: error instanceof Error ? error.message : 'Failed to create task', 
@@ -303,13 +281,12 @@ export const useAdminStore = create<AdminState>()((set, get) => {
       }
     },
 
-    inviteMember: async (email: string) => {
+    inviteMember: async (email: string, aravtId: number) => {
       set({ isLoading: true, error: null });
       try {
-        const { user } = useAuthStore.getState();
-        await api.send_invitation(email); //user?.aravt?.id as number, user?.id as number);
-        get().fetchAdminData();
-      } catch (error) {
+        await api.send_invitation(email, aravtId);
+        await get().fetchAravtApplications(aravtId);
+      } catch {
         set({ error: 'Failed to invite member' });
       } finally {
         set({ isLoading: false });

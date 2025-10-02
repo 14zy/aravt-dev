@@ -4,13 +4,13 @@ import {
   AravtListItem,
   CreateAravt,
   CreateOffer,
-  JoinRequest,
   Offer,
   Project,
   RegistrationData,
   Skill,
   Task,
   TaskCompletion,
+  TasksGroupedListOut,
   User,
   UserSelf,
   UserSkill,
@@ -156,8 +156,13 @@ export const api = {
     return response.data;
   },
 
-  async aravt_applications(): Promise<JoinRequest[]> {
+  async aravt_applications(): Promise<ApplicationsGroupedListOut> {
     const response = await axios.get('/aravt/applications/');
+    return response.data;
+  },
+
+  async aravt_applications_for(aravt_id: number): Promise<ApplicationsGroupedListOut> {
+    const response = await axios.get(`/aravt/${aravt_id}/applications`);
     return response.data;
   },
 
@@ -193,21 +198,22 @@ export const api = {
   },
 
   async tasks_set_task(aravt_id: number, data: Omit<Task, 'id'>): Promise<MessageResponse> {
-    const response = await axios.post(`/tasks/${aravt_id}/set_task/`, data);
+    const response = await axios.post(`/tasks/${aravt_id}/set_task`, data);
     return response.data;
   },
 
-  async tasks_get_tasks(): Promise<{
-    tasks: Task[];
-    other_tasks: Task[];
-    parent_tasks: Task[];
-  }> {
+  async tasks_get_tasks(): Promise<TasksGroupedListOut> {
     const response = await axios.get('/tasks/');
     return response.data;
   },
 
+  async tasks_get_tasks_for_aravt(aravt_id: number): Promise<TasksGroupedListOut> {
+    const response = await axios.get(`/tasks/${aravt_id}`);
+    return response.data;
+  },
+
   async tasks_get_task(task_id: number): Promise<Task> {
-    const response = await axios.get(`/tasks/${task_id}`);
+    const response = await axios.get(`/tasks/task/${task_id}`);
     return response.data;
   },
 
@@ -215,24 +221,19 @@ export const api = {
     task_id: number,
     data: Partial<Task>
   ): Promise<MessageResponse> {
-    const response = await axios.put(
-      '/tasks/task/' + `${task_id}` + '/complete',
-      { task_id: task_id, body: data }
-    );
+    const response = await axios.put(`/tasks/task/${task_id}/complete`, { task_id, body: data });
     return response.data;
   },
 
   async tasks_all_completions(): Promise<TaskCompletion[]> {
-    const response = await axios.get('/tasks/all_comletions');
+    const response = await axios.get('/tasks/all_completions');
     return response.data;
   },
 
   async tasks_completions_for_task(
     task_completion_id: number
   ): Promise<TaskCompletion> {
-    const response = await axios.get(
-      `/tasks/completions_for_task/${task_completion_id}`
-    );
+    const response = await axios.get(`/tasks/completions_for_task/${task_completion_id}`);
     return response.data;
   },
 

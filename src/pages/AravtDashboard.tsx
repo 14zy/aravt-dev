@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Progress } from '@/components/ui/progress';
+import useSelectedAravt from '@/hooks/useSelectedAravt';
 import { useAravtsStore } from '@/store/aravts';
 import { useAuthStore } from '@/store/auth';
 import { useDashboardStore } from '@/store/dashboard';
@@ -107,16 +108,13 @@ const AravtDashboard = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const params = useParams();
   const navigate = useNavigate();
+  const { currentAravtId, setCurrentAravtId, currentAravt } = useSelectedAravt();
 
-  const currentAravtId = useMemo((): number | undefined => {
-    if (params.aravtId) {
-      const parsed = Number(params.aravtId);
-      return Number.isFinite(parsed) ? parsed : undefined;
-    }
-    // fallback: если нет параметра, попробуем взять первый из user.aravts
-    const first = user?.aravts?.[0]?.aravt?.id;
-    return first;
-  }, [params.aravtId, user?.aravts]);
+  const urlAravtId = useMemo((): number | undefined => {
+    if (!params.aravtId) return undefined;
+    const parsed = Number(params.aravtId);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }, [params.aravtId]);
 
   const canCreateAravt = useMemo((): boolean => {
     if (!user?.aravts || user.aravts.length === 0) return false;
@@ -128,13 +126,12 @@ const AravtDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
-    if (currentAravtId) {
-      fetchAravtDetails(currentAravtId);
-    } else if (user?.aravts?.length) {
-      // если у пользователя есть артавты, но параметра нет — редиректим на первый
+    if (urlAravtId && urlAravtId !== currentAravtId) {
+      setCurrentAravtId(urlAravtId);
+    } else if (!currentAravtId && user?.aravts?.length) {
       navigate(`/dashboard/${user.aravts[0].aravt.id}`, { replace: true });
     }
-  }, [fetchDashboardData, fetchAravtDetails, currentAravtId, navigate, user?.aravts]);
+  }, [fetchDashboardData, urlAravtId, currentAravtId, setCurrentAravtId, navigate, user?.aravts]);
 
   if (dashboardLoading || aravtLoading) {
     return <LoadingSpinner />;
@@ -144,7 +141,7 @@ const AravtDashboard = () => {
     <div className="mx-auto py-4 px-3 space-y-4">
       <div className=" items-center">
         <div>
-          <h1 className="text-2xl font-bold">{aravtDetails?.name} (№{aravtDetails?.id})</h1>
+          <h1 className="text-2xl font-bold">{(currentAravt?.name) ?? aravtDetails?.name} (№{(currentAravt?.id) ?? aravtDetails?.id})</h1>
           <p className="text-gray-500"><b>{user?.username}</b> dashboard</p>
         </div>
         {/* <div className="flex gap-1">

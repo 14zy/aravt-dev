@@ -1,5 +1,7 @@
 import { cn } from '@/lib/utils';
+import { useAravtsStore } from '@/store/aravts';
 import { useAuthStore } from '@/store/auth';
+import { useMemo } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 
 const NavLink = ({ to, children }: { to: string; children: React.ReactNode }) => {
@@ -20,9 +22,13 @@ const NavLink = ({ to, children }: { to: string; children: React.ReactNode }) =>
 }
 
 export default function Layout() {
-  const { user, aravt } = useAuthStore()
-  const isAdmin = user?.role === 'SuperAdmin'
+  const { user } = useAuthStore()
+  const isAdmin = false
   const location = useLocation()
+  const { getFirstAravtIdForUser, currentAravtId } = useAravtsStore()
+  const firstAravtId = useMemo(() => getFirstAravtIdForUser(user?.aravts), [getFirstAravtIdForUser, user?.aravts])
+  const effectiveAravtId = currentAravtId ?? firstAravtId
+  const hasAravt = Boolean(effectiveAravtId)
   const headerExcludedPaths = [
     '/login', '/signup', '/resend-email', '/forgot-password', '/reset_password',
     '/complete_registration'
@@ -37,30 +43,26 @@ export default function Layout() {
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center">
                 <div className="flex sm:flex">
-                  {
-                    user && (aravt ? (
-                      <div className="">
-                        <NavLink to="/dashboard">Dashboard</NavLink>
-                        <NavLink to="/members">Members</NavLink>
-                        <NavLink to="/projects">Projects</NavLink>
-                        <NavLink to="/tasks">Tasks</NavLink>
-                        <NavLink to="/wallet">Wallet</NavLink>
-                        <NavLink to="/offers">Offers</NavLink>
-                        <NavLink to="/Learn">Learn</NavLink>
-                        <NavLink to="/browse">Aravts</NavLink>
-
-
-                        {isAdmin && <NavLink to="/admin">Admin</NavLink>}
-                        <NavLink to="/profile">{user.username}</NavLink>
-                      </div>
-                    ) : (
-                      <div className="flex sm:flex-row">
-                        <NavLink to="/browse">Aravts</NavLink>
-                        <NavLink to="/Learn">Learn</NavLink>
-                        <NavLink to="/profile">{user.username}</NavLink>
-                      </div>
-                    ))
-                  }
+                  {user && (hasAravt ? (
+                    <div className="">
+                      <NavLink to={`/dashboard/${effectiveAravtId}`}>Dashboard</NavLink>
+                      <NavLink to={`/members/${effectiveAravtId}`}>Members</NavLink>
+                      <NavLink to="/projects">Projects</NavLink>
+                      <NavLink to="/tasks">Tasks</NavLink>
+                      <NavLink to="/wallet">Wallet</NavLink>
+                      <NavLink to="/offers">Offers</NavLink>
+                      <NavLink to="/Learn">Learn</NavLink>
+                      <NavLink to="/browse">Aravts</NavLink>
+                      {isAdmin && <NavLink to="/admin">Admin</NavLink>}
+                      <NavLink to="/profile">{user.username}</NavLink>
+                    </div>
+                  ) : (
+                    <div className="flex sm:flex-row">
+                      <NavLink to="/browse">Aravts</NavLink>
+                      <NavLink to="/Learn">Learn</NavLink>
+                      <NavLink to="/profile">{user.username}</NavLink>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

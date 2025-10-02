@@ -49,6 +49,7 @@ export function AppRoutes() {
         <Route path="/projects/:id" element={<ProjectDetails />} />
         <Route path="/tasks" element={<TasksManagement />} />
         <Route path="/members" element={<MemberManagement />} />
+        <Route path="/members/:aravtId" element={<MemberManagement />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/offers" element={<OffersManagement />} />
         <Route path="/browse" element={<BrowseAravts />} />
