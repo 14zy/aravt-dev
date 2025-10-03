@@ -27,6 +27,7 @@ export default function Layout() {
   const location = useLocation()
   const { getFirstAravtIdForUser, currentAravtId } = useAravtsStore()
   const firstAravtId = useMemo(() => getFirstAravtIdForUser(user?.aravts), [getFirstAravtIdForUser, user?.aravts])
+  console.log('firstAravtId', firstAravtId, 'currentAravtId', currentAravtId)
   const effectiveAravtId = currentAravtId ?? firstAravtId
   const hasAravt = Boolean(effectiveAravtId)
   const headerExcludedPaths = [
@@ -45,20 +46,22 @@ export default function Layout() {
                 <div className="flex sm:flex">
                   {user && (hasAravt ? (
                     <div className="">
+                      <NavLink to="/browse">Aravts</NavLink>
                       <NavLink to={`/dashboard/${effectiveAravtId}`}>Dashboard</NavLink>
                       <NavLink to={`/members/${effectiveAravtId}`}>Members</NavLink>
-                      <NavLink to="/projects">Projects</NavLink>
                       <NavLink to="/tasks">Tasks</NavLink>
-                      <NavLink to="/wallet">Wallet</NavLink>
+                      <NavLink to="/projects">Projects</NavLink>
                       <NavLink to="/offers">Offers</NavLink>
+                      <NavLink to="/wallet">Wallet</NavLink>
                       <NavLink to="/Learn">Learn</NavLink>
-                      <NavLink to="/browse">Aravts</NavLink>
                       {isAdmin && <NavLink to="/admin">Admin</NavLink>}
                       <NavLink to="/profile">{user.username}</NavLink>
                     </div>
                   ) : (
                     <div className="flex sm:flex-row">
                       <NavLink to="/browse">Aravts</NavLink>
+                      <NavLink to="/offers">Offers</NavLink>
+                      <NavLink to="/wallet">Wallet</NavLink>
                       <NavLink to="/Learn">Learn</NavLink>
                       <NavLink to="/profile">{user.username}</NavLink>
                     </div>
