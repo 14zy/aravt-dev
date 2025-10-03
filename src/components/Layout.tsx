@@ -1,7 +1,6 @@
+import { useSelectedAravt } from '@/hooks/useSelectedAravt';
 import { cn } from '@/lib/utils';
-import { useAravtsStore } from '@/store/aravts';
 import { useAuthStore } from '@/store/auth';
-import { useMemo } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 
 const NavLink = ({ to, children }: { to: string; children: React.ReactNode }) => {
@@ -25,11 +24,9 @@ export default function Layout() {
   const { user } = useAuthStore()
   const isAdmin = false
   const location = useLocation()
-  const { getFirstAravtIdForUser, currentAravtId } = useAravtsStore()
-  const firstAravtId = useMemo(() => getFirstAravtIdForUser(user?.aravts), [getFirstAravtIdForUser, user?.aravts])
-  console.log('firstAravtId', firstAravtId, 'currentAravtId', currentAravtId)
-  const effectiveAravtId = currentAravtId ?? firstAravtId
-  const hasAravt = Boolean(effectiveAravtId)
+  const { currentAravtId } = useSelectedAravt()
+  const effectiveAravtId = currentAravtId
+  const hasAravt = Boolean(currentAravtId)
   const headerExcludedPaths = [
     '/login', '/signup', '/resend-email', '/forgot-password', '/reset_password',
     '/complete_registration'

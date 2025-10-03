@@ -16,9 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSelectedAravt } from '@/hooks/useSelectedAravt';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { useAravtsStore } from '@/store/aravts';
+
 import { useAuthStore } from '@/store/auth';
 import { useUserStore } from '@/store/user';
 import type { UserAravtLink } from '@/types';
@@ -37,7 +38,7 @@ const Profile = () => {
   const token = searchParams.get('token');
 
   const authUser = useAuthStore(s => s.user);
-  const { currentAravtId, setCurrentAravtId, getFirstAravtIdForUser } = useAravtsStore();
+  const { currentAravtId, setCurrentAravtId } = useSelectedAravt();
   const aravtLinks = useMemo(() => (
     (authUser?.aravts ?? []) as UserAravtLink[]
   ), [authUser?.aravts]);
@@ -45,12 +46,6 @@ const Profile = () => {
     id: link.aravt.id,
     name: link.aravt.name ?? `Aravt #${link.aravt.id}`,
   })), [aravtLinks]);
-  useEffect(() => {
-    if (!currentAravtId) {
-      const first = getFirstAravtIdForUser(aravtLinks);
-      if (first) setCurrentAravtId(first);
-    }
-  }, [currentAravtId, setCurrentAravtId, aravtLinks, getFirstAravtIdForUser]);
   const selectedAravtLink = useMemo(
     () => aravtLinks.find(l => l.aravt.id === currentAravtId),
     [aravtLinks, currentAravtId]

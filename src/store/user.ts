@@ -1,11 +1,12 @@
 import { api } from '@/lib/api';
 import { DISABLE_CACHE } from '@/lib/env';
 import { dedupe, shouldRevalidate } from '@/lib/swrCache';
-import { ApplicationsGroupedListOut, JoinRequestWithAravt, Skill, UserSelf } from '@/types';
+import { useAuthStore } from '@/store/auth';
+import { ApplicationsGroupedListOut, JoinRequestWithAravt, Skill, User } from '@/types';
 import { create } from 'zustand';
 
 interface UserState {
-  user: UserSelf | null;
+  user: User | null;
   applications: JoinRequestWithAravt[];
   availableSkills: Skill[];
   isLoading: boolean;
@@ -30,14 +31,14 @@ export const useUserStore = create<UserState>((set, get) => ({
   fetchUserProfile: async (opts) => {
     const { profileFetchedAt } = get();
     const ttl = opts?.ttlMs ?? 0;
+    const authUser = useAuthStore.getState().user;
 
-    // Return cached data immediately (no spinner)
+    // Return cached and optionally revalidate in background
     if (profileFetchedAt && !opts?.force && !DISABLE_CACHE) {
-      // trigger background revalidate if needed
-      if (shouldRevalidate(profileFetchedAt, ttl)) {
+      if (shouldRevalidate(profileFetchedAt, ttl) && authUser) {
         void dedupe('user/profile', async () => {
           try {
-            const freshUser = await api.who_am_i();
+            const freshUser = await api.users_user(authUser.id);
             const grouped: ApplicationsGroupedListOut = await api.check_my_applications();
             const freshApps: JoinRequestWithAravt[] = mapApplications(grouped);
             set({ user: freshUser, applications: freshApps, profileFetchedAt: Date.now() });
@@ -51,10 +52,15 @@ export const useUserStore = create<UserState>((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      const user = await dedupe('user/profile:user', () => api.who_am_i());
+      if (!authUser) {
+        console.error('No auth.user');
+        set({ isLoading: false });
+        return;
+      }
+      const freshUser = await dedupe('user/profile:user', () => api.users_user(authUser.id));
       const grouped: ApplicationsGroupedListOut = await api.check_my_applications();
       const applications: JoinRequestWithAravt[] = mapApplications(grouped);
-      set({ user, applications, isLoading: false, profileFetchedAt: Date.now() });
+      set({ user: freshUser, applications, isLoading: false, profileFetchedAt: Date.now() });
     } catch (error) {
       console.error('fetchUserProfile failed', error);
       set({ error: error instanceof Error ? error.message : 'Failed to fetch user profile', isLoading: false });

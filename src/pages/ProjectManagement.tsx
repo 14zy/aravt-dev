@@ -4,13 +4,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { useAravtsStore } from '@/store/aravts';
+import { useSelectedAravt } from '@/hooks/useSelectedAravt';
 import { useAuthStore } from '@/store/auth';
 import { useOffersStore } from '@/store/offers';
 import { useProjectsStore } from '@/store/projects';
 import { Project } from "@/types";
 import { Banknote } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const ProjectCard = ({ project }: { project: Project }) => {
@@ -89,10 +89,9 @@ const ProjectCard = ({ project }: { project: Project }) => {
 const ProjectManagement = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { currentAravtId, getFirstAravtIdForUser } = useAravtsStore();
+  const { currentAravtId: effectiveAravtId } = useSelectedAravt();
   const { projects, isLoading, error, fetchProjectsForAravt } = useProjectsStore();
   const { isLoading: offersLoading, fetchOffers } = useOffersStore();
-  const effectiveAravtId = useMemo(() => getFirstAravtIdForUser(user?.aravts) ?? currentAravtId, [getFirstAravtIdForUser, user?.aravts, currentAravtId]);
 
   useEffect(() => {
     if (!user) {

@@ -8,8 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useSelectedAravt } from '@/hooks/useSelectedAravt';
 import { useAdminStore } from '@/store/admin';
-import { useAravtsStore } from '@/store/aravts';
 import { useAuthStore } from '@/store/auth';
 import { Plus, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -18,14 +18,14 @@ import { toast } from 'react-toastify';
 
 const MemberManagement = () => {
   const { user } = useAuthStore(); 
-  const { currentAravtId, aravts } = useAravtsStore();
+  const { currentAravtId } = useSelectedAravt();
   const { aravtId: aravtIdParam } = useParams();
   const navigate = useNavigate();
   const aravtId = useMemo(() => {
     const n = Number(aravtIdParam);
     return Number.isFinite(n) && n > 0 ? n : undefined;
   }, [aravtIdParam]);
-  const fallbackAravtId = useMemo(() => currentAravtId ?? (aravts && aravts.length > 0 ? aravts[0].id : undefined), [currentAravtId, aravts]);
+  const fallbackAravtId = currentAravtId;
   
   const { 
     members, 

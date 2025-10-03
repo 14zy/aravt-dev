@@ -9,8 +9,8 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { useSelectedAravt } from '@/hooks/useSelectedAravt';
 import { api } from '@/lib/api';
-import { useAravtsStore } from '@/store/aravts';
 import { useAuthStore } from '@/store/auth';
 import { useTasksStore } from '@/store/tasks';
 import { Project, Task } from '@/types';
@@ -19,8 +19,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 const TasksManagement = () => {
   const { user } = useAuthStore();
-  const { currentAravtId, getFirstAravtIdForUser } = useAravtsStore();
-  const effectiveAravtId = useMemo(() => getFirstAravtIdForUser(user?.aravts) ?? currentAravtId, [getFirstAravtIdForUser, user?.aravts, currentAravtId]);
+  const { currentAravtId: effectiveAravtId } = useSelectedAravt();
   const { 
     localTasks, 
     globalTasks, 
