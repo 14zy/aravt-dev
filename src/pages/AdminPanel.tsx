@@ -14,6 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useSelectedAravt } from '@/hooks/useSelectedAravt';
+import { canManageAravt } from '@/lib/permissions';
 import { useAdminStore } from '@/store/admin';
 import { useAuthStore } from '@/store/auth';
 import { AlertCircle, Globe, Plus, Search, Settings, Users, Wallet } from 'lucide-react';
@@ -42,18 +43,17 @@ const AdminPanel = () => {
     updateSettings
   } = useAdminStore();
 
-  const { currentAravtId, firstAravtId } = useSelectedAravt();
-  const effectiveAravtId = currentAravtId ?? firstAravtId;
-  const canManage = !!(user?.aravts?.some(link => link.is_leader_of_aravt && (!effectiveAravtId || link.aravt.id === effectiveAravtId)));
+  const { currentAravtId } = useSelectedAravt();
+  const canManage = canManageAravt(user, currentAravtId);
 
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
 
   useEffect(() => {
-    if (effectiveAravtId) {
-      void fetchAravtData(effectiveAravtId);
-      void fetchAravtApplications(effectiveAravtId);
+    if (currentAravtId) {
+      void fetchAravtData(currentAravtId);
+      void fetchAravtApplications(currentAravtId);
     }
-  }, [effectiveAravtId, fetchAravtData, fetchAravtApplications]);
+  }, [currentAravtId, fetchAravtData, fetchAravtApplications]);
 
 
   const [createTaskForm, setCreateTaskForm] = useState<Omit<Task, 'id'>>({
@@ -263,9 +263,9 @@ const AdminPanel = () => {
                     <MemberCard
                       key={member.id}
                       canManage={canManage}
-                      aravtId={effectiveAravtId ?? 0}
+                      aravtId={currentAravtId ?? 0}
                       member={member}
-                      onRemoveMember={(userId) => { if (!effectiveAravtId) return; void removeMember(userId, effectiveAravtId); }}
+                      onRemoveMember={(userId) => { if (!currentAravtId) return; void removeMember(userId, currentAravtId); }}
                       isLoading={isLoading}
                     />
                   ))}

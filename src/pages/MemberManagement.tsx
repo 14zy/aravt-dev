@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useSelectedAravt } from '@/hooks/useSelectedAravt';
+import { isUserLeaderOfAravt } from '@/lib/permissions';
 import { useAdminStore } from '@/store/admin';
-import { useAravtsStore } from '@/store/aravts';
 import { useAuthStore } from '@/store/auth';
 import { Plus, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -18,14 +19,14 @@ import { toast } from 'react-toastify';
 
 const MemberManagement = () => {
   const { user } = useAuthStore(); 
-  const { currentAravtId, aravts } = useAravtsStore();
+  const { currentAravtId } = useSelectedAravt();
   const { aravtId: aravtIdParam } = useParams();
   const navigate = useNavigate();
   const aravtId = useMemo(() => {
     const n = Number(aravtIdParam);
     return Number.isFinite(n) && n > 0 ? n : undefined;
   }, [aravtIdParam]);
-  const fallbackAravtId = useMemo(() => currentAravtId ?? (aravts && aravts.length > 0 ? aravts[0].id : undefined), [currentAravtId, aravts]);
+  const fallbackAravtId = currentAravtId;
   
   const { 
     members, 
@@ -66,12 +67,16 @@ const MemberManagement = () => {
     }
   };
 
+  const isLeader = useMemo(() => isUserLeaderOfAravt(user, aravtId), [user, aravtId]);
+
   useEffect(() => {
     if (aravtId) {
       fetchAravtData(aravtId);
-      fetchAravtApplications(aravtId);
+      if (isLeader) {
+        fetchAravtApplications(aravtId);
+      }
     }
-  }, [aravtId, fetchAravtData, fetchAravtApplications]);
+  }, [aravtId, isLeader, fetchAravtData, fetchAravtApplications]);
 
   // Мягкий редирект: если нет корректного aravtId в URL, отправляем на первый доступный
   useEffect(() => {
@@ -80,12 +85,7 @@ const MemberManagement = () => {
     }
   }, [aravtId, fallbackAravtId, navigate]);
 
-  // Вычисляем, является ли текущий пользователь лидером для выбранного аравта
-  const isLeader = useMemo(() => {
-    if (!user || !aravtId) return false;
-    const links = user.aravts || [];
-    return links.some(link => link.aravt?.id === aravtId && link.is_leader_of_aravt);
-  }, [user, aravtId]);
+
 
   if (!user) {
     return <LoadingSpinner />;
@@ -207,26 +207,32 @@ const MemberManagement = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Requests to Join your Aravt:</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {isLoading ? (
-            <div className="py-8 flex justify-center"><LoadingSpinner /></div>
-          ) : (
-            pendingRequests.map((application) => (
-              <RequestCard
-                key={application.id}
-                request={application}
-                onApprove={approveRequest}
-                onReject={rejectRequest}
-                isLoading={isLoading}
-              />
-            ))
-          )}
-        </CardContent>
-      </Card>
+      {isLeader && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Requests to Join your Aravt:</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isLoading ? (
+              <div className="py-8 flex justify-center"><LoadingSpinner /></div>
+            ) : (
+                pendingRequests.length === 0 ? (
+                  <div className="py-8 text-center text-muted-foreground">No new join requests at the moment.</div>
+                ) : (
+                    pendingRequests.map((application) => (
+                      <RequestCard
+                        key={application.id}
+                        request={application}
+                        onApprove={approveRequest}
+                        onReject={rejectRequest}
+                        isLoading={isLoading}
+                      />
+                    ))
+                  )
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       
     </div>
