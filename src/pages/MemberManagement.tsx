@@ -216,15 +216,19 @@ const MemberManagement = () => {
             {isLoading ? (
               <div className="py-8 flex justify-center"><LoadingSpinner /></div>
             ) : (
-              pendingRequests.map((application) => (
-                <RequestCard
-                  key={application.id}
-                  request={application}
-                  onApprove={approveRequest}
-                  onReject={rejectRequest}
-                  isLoading={isLoading}
-                />
-              ))
+                pendingRequests.length === 0 ? (
+                  <div className="py-8 text-center text-muted-foreground">No new join requests at the moment.</div>
+                ) : (
+                    pendingRequests.map((application) => (
+                      <RequestCard
+                        key={application.id}
+                        request={application}
+                        onApprove={approveRequest}
+                        onReject={rejectRequest}
+                        isLoading={isLoading}
+                      />
+                    ))
+                  )
             )}
           </CardContent>
         </Card>

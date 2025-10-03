@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useAuthStore } from '@/store/auth';
 import { useUserStore } from '@/store/user';
 import { AravtMember } from '@/types';
 
@@ -15,6 +16,8 @@ interface MemberCardProps {
 
 export const MemberCard = ({ canManage, aravtId, member, onRemoveMember, isLoading }: MemberCardProps) => {
   const { letUserCreateAravt } = useUserStore();
+  const { user } = useAuthStore();
+  const isSelf = user?.id === member.id;
   // Handler for updating the ability to create Aravt
   const handleAravtChange = async () => {
     try {
@@ -63,7 +66,7 @@ export const MemberCard = ({ canManage, aravtId, member, onRemoveMember, isLoadi
           </div>
         </div>
         <div className="mt-4">
-          {canManage && (
+          {canManage && !isSelf && (
             <>
             <div className="flex items-center">
                 <input 
@@ -125,15 +128,17 @@ export const MemberCard = ({ canManage, aravtId, member, onRemoveMember, isLoadi
               <SelectItem value="SuperAdmin">Super Admin</SelectItem>
             </SelectContent>
           </Select> */}
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="w-full text-red-500 hover:text-red-600"
-            onClick={() => onRemoveMember(member.id)}
-            disabled={isLoading}
-          >
-            Remove Member
-          </Button>
+          {canManage && !isSelf && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-red-500 hover:text-red-600"
+              onClick={() => onRemoveMember(member.id)}
+              disabled={isLoading}
+            >
+              Remove Member
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
