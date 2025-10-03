@@ -146,9 +146,9 @@ const Profile = () => {
               <Button asChild className="w-full">
                 <Link to="https://t.me/share/url?url=https://aravt.io/">Share app</Link>
               </Button>
-              <Button variant="outline" asChild className="w-full">
+              {/* <Button variant="outline" asChild className="w-full">
                 <Link to="#">Leave Aravt</Link>
-              </Button>
+              </Button> */}
             </div>
           ) : (
             <p className="text-gray-500">Not a member of any Aravt</p>
