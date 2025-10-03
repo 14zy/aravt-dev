@@ -263,9 +263,9 @@ const AdminPanel = () => {
                     <MemberCard
                       key={member.id}
                       canManage={canManage}
-                      aravtId={effectiveAravtId ?? 0}
+                      aravtId={currentAravtId ?? 0}
                       member={member}
-                      onRemoveMember={(userId) => { if (!effectiveAravtId) return; void removeMember(userId, effectiveAravtId); }}
+                      onRemoveMember={(userId) => { if (!currentAravtId) return; void removeMember(userId, currentAravtId); }}
                       isLoading={isLoading}
                     />
                   ))}
