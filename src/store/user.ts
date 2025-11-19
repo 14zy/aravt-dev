@@ -57,7 +57,7 @@ export const useUserStore = create<UserState>((set, get) => ({
         set({ isLoading: false });
         return;
       }
-      const freshUser = await dedupe('user/profile:user', () => api.users_user(authUser.id));
+      const freshUser = await dedupe('user/profile', () => api.users_user(authUser.id));
       const grouped: ApplicationsGroupedListOut = await api.check_my_applications();
       const applications: JoinRequestWithAravt[] = mapApplications(grouped);
       set({ user: freshUser, applications, isLoading: false, profileFetchedAt: Date.now() });

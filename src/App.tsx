@@ -8,13 +8,11 @@ import { AppRoutes } from './routes'
 function App() {
   const fetchUser = useAuthStore((s) => s.fetchUser)
   const token = useAuthStore((s) => s.token)
-  const user = useAuthStore((s) => s.user)
 
   useEffect(() => {
-    if (token && !user) {
-      fetchUser()
-    }
-  }, [fetchUser, token, user])
+    if (!token) return
+    fetchUser()
+  }, [fetchUser, token])
 
   return (
     <ErrorBoundary>
