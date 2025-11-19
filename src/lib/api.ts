@@ -135,7 +135,7 @@ export const api = {
     return response.data;
   },
 
-  async aravt_create_aravt(data: CreateAravt): Promise<unknown> {
+  async aravt_create_aravt(data: CreateAravt): Promise<AravtDetails> {
     const response = await axios.post('/aravt/create_aravt/', data);
     return response.data;
   },
