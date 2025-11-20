@@ -16,7 +16,7 @@ interface AravtsState {
   fetchAravts: () => Promise<void>;
   fetchAravtDetails: (aravtId: number, opts?: { force?: boolean; ttlMs?: number }) => Promise<AravtDetails>;
   applyToAravt: (aravtId: number, text: string) => Promise<void>;
-  createAravt: (aravt: CreateAravt) => Promise<void>;
+  createAravt: (aravt: CreateAravt) => Promise<AravtDetails>;
   setCurrentAravtId: (id: number | undefined) => void;
   getFirstAravtIdForUser: (userAravts?: UserAravtLink[]) => number | undefined;
 }
@@ -90,10 +90,18 @@ export const useAravtsStore = create<AravtsState>()(persist((set, get) => ({
   createAravt: async (aravt: CreateAravt) => {
     set({ isLoading: true, error: null });
     try {
-      await api.aravt_create_aravt(aravt);
-      set({ isLoading: false });
+      const created = await api.aravt_create_aravt(aravt);
+      set((prev) => ({
+        isLoading: false,
+        aravtDetails: created,
+        aravtDetailsById: { ...(prev.aravtDetailsById || {}), [created.id]: created },
+        fetchedAtById: { ...(prev.fetchedAtById || {}), [created.id]: Date.now() },
+      }));
+      void get().fetchAravts();
+      return created;
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Failed to create aravt', isLoading: false });
+      throw err;
     }
   },
   setCurrentAravtId: (id) => set({ currentAravtId: id }),
