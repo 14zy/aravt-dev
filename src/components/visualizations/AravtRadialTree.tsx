@@ -150,6 +150,14 @@ const AravtRadialTree = ({ aravts }: AravtRadialTreeProps) => {
   return (
     <div className="w-full overflow-auto flex justify-center">
       <svg ref={svgRef} className="aravt-tree"></svg>
+      <iframe
+        title="Interactive or visual content"
+        src="https://flo.uri.sh/visualisation/24902696/embed?auto=1"
+        style={{ width: '100%', height: '964px' }}
+        sandbox="allow-same-origin allow-forms allow-scripts allow-downloads allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"
+        scrolling="no"
+        frameBorder="0"
+      />
     </div>
   );
 };
