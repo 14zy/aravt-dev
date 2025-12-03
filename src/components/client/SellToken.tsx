@@ -18,7 +18,7 @@ const SellToken: React.FC = () => {
         // Prevent multiple decimal points
         if (value.split('.').length > 2) return;
         setAmount(value);
-        setTokenAmount((Number(value) * 600 * 0.9).toFixed(2));
+        setTokenAmount((Number(value) * 110 * 0.9).toFixed(2));
     };
 
     const handleChange2 = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,7 +27,7 @@ const SellToken: React.FC = () => {
         // Prevent multiple decimal points
         if (value.split('.').length > 2) return;
         setTokenAmount(value);
-        setAmount((Number(value) / 600 / 0.9).toFixed(2));
+        setAmount((Number(value) / 110 / 0.9).toFixed(2));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
