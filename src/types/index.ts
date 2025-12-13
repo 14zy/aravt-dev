@@ -34,6 +34,7 @@ export interface AravtListItem {
   name: string;
   description: string;
   responsible_user_id: number;
+  aravt_father_id: number | null;
   is_draft: boolean;
   wallet_address: string | null;
 }
