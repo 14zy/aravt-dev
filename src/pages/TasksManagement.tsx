@@ -128,12 +128,12 @@ const TasksManagement = () => {
     <div className="w-full max-w-6xl mx-auto mt-0 space-y-6">
       <div className="">
         <div>
-          <h1 className="text-2xl font-bold">Current Tasks</h1>
+          <h1 className="text-2xl font-bold">Tasks</h1>
           <p className="text-gray-500 mb-2">Set objectives and track progress</p>
         </div>
         <Button onClick={() => setShowCreateTaskForm(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Create Task
+          Add Task
         </Button>
 
         {showCreateTaskForm && (
@@ -303,7 +303,7 @@ const TasksManagement = () => {
             <TabsList>
               <TabsTrigger value="local" className="flex items-center gap-2">
                 <Home className="h-4 w-4" />
-                Aravt ({filteredLocalTasks.length})
+                Local ({filteredLocalTasks.length})
               </TabsTrigger>
               <TabsTrigger value="global" className="flex items-center gap-2">
                 <Globe className="h-4 w-4 text-blue-500" />

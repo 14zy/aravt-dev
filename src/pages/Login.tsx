@@ -134,7 +134,7 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
                   <Input
                     id="username"
                     type="username"
-                    placeholder="username"
+                    placeholder=""
                     value={username}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                     onBlur={() => setUsername(prev => normalizeUsername(prev))}
@@ -175,7 +175,7 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
                       }`}
                     className="text-primary hover:underline"
                   >
-                    Sign up
+                    Register
                   </Link>
                   <br />
                   <Link

@@ -172,13 +172,13 @@ const AravtCard = ({ aravt }: AravtCardProps) => {
           onClick={() => setIsJoining(!isJoining)}
           disabled={isSubmitting}
         >
-          {isSubmitting ? 'Submitting...' : '✚ Join Aravt'}
+          {isSubmitting ? 'Submitting...' : '✚ Ask to Join'}
         </Button>
         <Button
           onClick={handleExpandClick}
           disabled={isLoading}
         >
-          {isLoading ? 'Loading...' : isExpanded ? 'X Close' : '▼ More info'}
+          {isLoading ? 'Loading...' : isExpanded ? 'X Close' : '▼ Details'}
         </Button>
         
       </div>

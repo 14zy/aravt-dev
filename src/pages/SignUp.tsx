@@ -75,7 +75,7 @@ const SignUp = () => {
 
       await api.register(registrationData);
       // Navigate to login while preserving referral info in the URL
-      alert('Registration successful! Please confirm your e-mail before logging in.');
+      alert('Registration successful! Please check your email and follow the link.');
       if (referralInfo) {
         navigate(`/login?ref=${referralInfo.referredById}${referralInfo.aravtId ? `&aravtId=${referralInfo.aravtId}` : ''
           }`);
@@ -90,7 +90,7 @@ const SignUp = () => {
   return (
     <div className="min-h-screen flex bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
-        <h2 className="text-center text-3xl font-bold">Sign Up Registration</h2>
+        <h2 className="text-center text-3xl font-bold">Registration</h2>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
             <div>
@@ -157,7 +157,7 @@ const SignUp = () => {
                 onChange={(date) => handleChange(date)}
                 dateFormat="yyyy-MM-dd"
                 className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-gray-100"
-                placeholderText="Select date of birth"
+                placeholderText="Date of birth"
                 required
                 showYearDropdown
                 yearDropdownItemNumber={100}
@@ -175,7 +175,7 @@ const SignUp = () => {
                 type="text"
                 required
                 className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-gray-100"
-                placeholder="Full name"
+                placeholder="Full Name"
                 value={formData.full_name}
                 onChange={handleChange}
                 onBlur={() => setFormData(prev => ({ ...prev, full_name: normalize(prev.full_name) }))}
@@ -192,7 +192,7 @@ const SignUp = () => {
           </div>
         </form>
         <div className="text-sm text-center text-gray-500">
-          By connecting, you agree to our Terms of Service and Privacy Policy
+          By connecting, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
         </div>
         <div className="text-center text-sm mt-4">
           Already have an account?{" "}

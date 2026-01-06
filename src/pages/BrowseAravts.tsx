@@ -39,9 +39,9 @@ const BrowseAravts = () => {
       <Card className="bg-blue-50 border-none p-6">
         <div className="flex items-center gap-2 mb-2">
         <span className="text-2xl">👋</span>
-        <h2 className="text-xl font-semibold">Welcome to Aravt!</h2>
+        <h2 className="text-xl font-semibold">Welcome to Aravts!</h2>
         </div>
-        <p className="text-gray-600">You need to join one of the active Aravts to continue.</p>
+        <p className="text-gray-600 text-left">You need to join one of the active Aravts to continue.</p>
       </Card>
       )}
 

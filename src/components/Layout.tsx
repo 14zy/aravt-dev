@@ -46,8 +46,8 @@ export default function Layout() {
                       <NavLink to="/browse">Aravts</NavLink>
                       <NavLink to={`/dashboard/${effectiveAravtId}`}>Dashboard</NavLink>
                       <NavLink to={`/members/${effectiveAravtId}`}>Members</NavLink>
+                      <NavLink to="/projects">Business</NavLink>
                       <NavLink to="/tasks">Tasks</NavLink>
-                      <NavLink to="/projects">Projects</NavLink>
                       <NavLink to="/offers">Offers</NavLink>
                       <NavLink to="/wallet">Wallet</NavLink>
                       <NavLink to="/Learn">Learn</NavLink>
@@ -79,7 +79,7 @@ export default function Layout() {
       <footer className="bg-white shadow mt-auto h-[60px] flex items-center">
         <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-center text-gray-500 text-sm">
-            © 2025 Aravt. All rights reserved.
+            © 2026 Aravt Systems. All rights reserved.
             <br></br><a href="https://docs.google.com/document/d/15ZrMssFJ4-qx8f6sZs1qY1BpR1Oh0UDSG0O1M3pR0GQ/edit?tab=t.0#heading=h.ozs7eg87x5l7" target="_blank" rel="noopener noreferrer">Whitepaper</a>
           </p>
         </div>

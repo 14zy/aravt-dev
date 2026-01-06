@@ -237,15 +237,15 @@ const AravtRadialTree = ({ aravts }: AravtRadialTreeProps) => {
       <div className="flex gap-4 text-sm text-gray-600">
         <div className="flex items-center gap-2">
           <span className="inline-block h-3 w-3 rounded-full" style={{ background: '#111827' }} />
-          <span>Aravt with children</span>
+          <span>Aravt</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="inline-block h-3 w-3 rounded-full" style={{ background: '#6b7280' }} />
-          <span>Aravt without children</span>
+          <span>New Aravt</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="inline-block h-3 w-3 rounded-full" style={{ background: '#f59e0b' }} />
-          <span>Draft Aravt</span>
+          <span>Draft</span>
         </div>
       </div>
     </div>
@@ -253,7 +253,3 @@ const AravtRadialTree = ({ aravts }: AravtRadialTreeProps) => {
 };
 
 export default AravtRadialTree;
-
-
-// https://dev.aravt.io/data
-// https://observablehq.com/@d3/radial-tree/2

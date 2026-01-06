@@ -182,7 +182,7 @@ const MemberManagement = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="SuperAdmin">Super Admin</SelectItem>
+                  {/* <SelectItem value="SuperAdmin">Super Admin</SelectItem> */}
                   <SelectItem value="AravtLeader">Aravt Leader</SelectItem>
                   <SelectItem value="User">User</SelectItem>
                 </SelectContent>

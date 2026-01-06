@@ -143,7 +143,7 @@ const AravtDashboard = () => {
     <div className="mx-auto py-4 px-3 space-y-4">
       <div className=" items-center">
         <div>
-          <h1 className="text-2xl font-bold">{(currentAravt?.name) ?? aravtDetails?.name} (№{(currentAravt?.id) ?? aravtDetails?.id})</h1>
+          <h1 className="text-2xl font-bold">{(currentAravt?.name) ?? aravtDetails?.name} (#{(currentAravt?.id) ?? aravtDetails?.id})</h1>
           <p className="text-gray-500"><b>{user?.username}</b> dashboard</p>
         </div>
         {/* <div className="flex gap-1">
@@ -162,20 +162,21 @@ const AravtDashboard = () => {
         </Alert>
       )}
 
+      
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">About</CardTitle>
+          <CardTitle className="text-sm">Leadership</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-sm text-muted-foreground">{aravtDetails?.description}</p>
-          {/*
-            TODO: вернуть навыки, когда API снова начнет возвращать skills
-            <div className="flex flex-wrap gap-1">
-              {aravtDetails?.skills?.map((skill: string, i: number) => (
-                <Badge key={i} variant="outline" className="text-xs">{skill}</Badge>
-              ))}
+        <CardContent>
+          <div className="flex items-center gap-2">
+            <Avatar className="h-6 w-6">
+              <AvatarFallback className="text-xs">{aravtDetails?.leader?.username ?? '?'}</AvatarFallback>
+            </Avatar>
+            <div className="text-left">
+              <p className="text-sm font-medium">{aravtDetails?.leader?.username ?? '—'}</p>
+              <p className="text-xs text-muted-foreground">Aravt Leader</p>
             </div>
-          */}
+          </div>
         </CardContent>
       </Card>
 
@@ -203,20 +204,21 @@ const AravtDashboard = () => {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Leadership</CardTitle>
+          <CardTitle className="text-sm">About</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarFallback className="text-xs">{aravtDetails?.leader?.username ?? '?'}</AvatarFallback>
-            </Avatar>
-            <div className="text-left">
-              <p className="text-sm font-medium">{aravtDetails?.leader?.username ?? '—'}</p>
-              <p className="text-xs text-muted-foreground">Aravt Leader</p>
+        <CardContent className="space-y-2">
+          <p className="text-sm text-muted-foreground">{aravtDetails?.description}</p>
+          {/*
+            TODO: вернуть навыки, когда API снова начнет возвращать skills
+            <div className="flex flex-wrap gap-1">
+              {aravtDetails?.skills?.map((skill: string, i: number) => (
+                <Badge key={i} variant="outline" className="text-xs">{skill}</Badge>
+              ))}
             </div>
-          </div>
+          */}
         </CardContent>
       </Card>
+
 
       
 
@@ -225,14 +227,14 @@ const AravtDashboard = () => {
       {aravtDetails && (
         <Card>
           <CardHeader>
-            <CardTitle>Aravt Business</CardTitle>
+            <CardTitle>Business</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             
 
             {businessProjects.length > 0 && (
               <div>
-                <h4 className="text-sm font-medium text-gray-500">Projects</h4>
+                <h4 className="text font-bold text-gray-500">Projects</h4>
                 <div className="grid gap-2 mt-2">
                   {businessProjects.map((project: Project) => (
                     <Card key={project.id} className="p-4">
@@ -242,7 +244,6 @@ const AravtDashboard = () => {
                           <p className="text-sm pb-1 text-gray-500">{project.description}</p>
                         </div>
                         <Badge>{"Active"}</Badge>
-                        {/* <Badge>{project.Status}</Badge> */}
                       </div>
                     </Card>
                   ))}
@@ -252,7 +253,7 @@ const AravtDashboard = () => {
 
             {aravtDetails.offers?.length > 0 && (
               <div>
-                <h4 className="pt-2 text-sm font-medium text-gray-500">Market Offers</h4>
+                <h4 className="pt-2 text-sm font-medium text-gray-500">Our Offers</h4>
                 <div className="grid gap-2 mt-2">
                   {aravtDetails.offers.map((offer: AravtOffer) => (
                     <Card key={offer.id} className="p-4">
@@ -262,7 +263,7 @@ const AravtDashboard = () => {
                           <p className="text-sm text-gray-500">{offer.description}</p>
                         </div>
                         <div className="text-center">
-                          <div className="font-medium pt-2">{"$" + offer.price}</div>
+                          <div className="font-bold pt-2">{"$" + offer.price}</div>
                           {offer.is_limited && (
                             <div className="text-sm text-gray-500">
                               {offer.count_left} remaining
@@ -296,18 +297,17 @@ const AravtDashboard = () => {
 
       
 
-      <QuickActions />
+      {/* <QuickActions /> */}
 
       <Card>
         <CardHeader>
-          <CardTitle>Statistics</CardTitle>
+          <CardTitle>Revenue</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-1">
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <p className="text-sm text-muted-foreground">Tasks</p>
-              <p className="text-lg font-semibold">{stats.tasksCompleted}/{stats.totalTasks}</p>
-              <Progress value={(stats.tasksCompleted / stats.totalTasks) * 100} className="h-1 mt-1" />
+              <p className="text-sm text-muted-foreground">Earned</p>
+              <p className="text-lg font-semibold">${stats.tokensEarned}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Rating</p>
@@ -315,9 +315,12 @@ const AravtDashboard = () => {
               <Progress value={stats.rankProgress} className="h-1 mt-1" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Tokens</p>
-              <p className="text-lg font-semibold">{stats.tokensEarned} $aravt</p>
+              <p className="text-sm text-muted-foreground">Tasks</p>
+              <p className="text-lg font-semibold">{stats.tasksCompleted}/{stats.totalTasks}</p>
+              <Progress value={(stats.tasksCompleted / stats.totalTasks) * 100} className="h-1 mt-1" />
             </div>
+            
+            
           </div>
         </CardContent>
       </Card>

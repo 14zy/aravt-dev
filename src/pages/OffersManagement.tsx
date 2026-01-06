@@ -76,8 +76,8 @@ const OffersManagement = () => {
     <div className="container mx-auto py-6 space-y-8">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-left">Offers from Aravts</h1>
-          <p className="text-gray-500 text-left">Trading with others</p>
+          <h1 className="text-2xl font-bold text-left">Available Offers</h1>
+          <p className="text-gray-500 text-left">Trading with Aravts</p>
         </div>
         <CreateOfferDialog projects={projects} />
       </div>
@@ -88,7 +88,7 @@ const OffersManagement = () => {
             {project.logo && (
               <img src={project.logo} alt={project.name} className="h-6 w-6" />
             )}
-            <h2 className="text-xl font-semibold">{project.name}</h2>
+            <h2 className="text-xl font-semibold">🌀 {project.name}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {offersByProject[project.id]?.map((offer) => (
@@ -107,20 +107,28 @@ function OfferCard({ offer }: { offer: Offer }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{offer.name}</CardTitle>
-        <CardDescription>{offer.description}</CardDescription>
+        <CardTitle><small>{offer.name}</small></CardTitle>
+        
       </CardHeader>
       <CardContent>
-        <div className="">
-          <p>Offer Validity period {offer.duration} days</p>
-          <p className="font-medium">Price: ${offer.price}</p>
-          {offer.is_limited && (
-            <p className="text-amber-600">
-              {offer.count_left} remaining
-            </p>
-          )}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <CardDescription>{offer.description}</CardDescription>
+            <p className="font-medium">Price: ${offer.price}</p>
+            
+            
+          </div>
+          <div>
+            <p>Validity {offer.duration} days</p>
+            {offer.is_limited && (
+              <p className="text-amber-600">
+            {offer.count_left} remaining
+              </p>
+            )}
+          </div>
         </div>
-        <Button className="mt-2" disabled variant="outline" size="sm">Buy Now</Button>
+        <Button className="m-2" disabled variant="outline" size="sm">Purchase</Button>
+        <Button className="m-2" disabled variant="outline" size="sm">Request</Button>
 
       </CardContent>
     </Card>
@@ -158,7 +166,7 @@ function CreateOfferDialog({ projects }: { projects: Project[] }) {
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          Create Offer
+          Add New
         </Button>
       </DialogTrigger>
       <DialogContent>

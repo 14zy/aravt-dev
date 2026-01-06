@@ -211,13 +211,7 @@ const Wallet = () => {
 
   return (
     
-    <div className="container mx-auto p-4 space-y-6">
-
-    <Card>
-        <CardContent>
-          <SellToken />
-        </CardContent>
-      </Card>
+    <div className="container mx-auto space-y-6">
 
       <div className="w-full flex justify-center gap-4">
         <TonConnectButton />
@@ -233,6 +227,12 @@ const Wallet = () => {
         )}
       </div>
       
+          <Card>
+        <CardContent>
+          <SellToken />
+        </CardContent>
+      </Card>
+
       
       
       <Card>
@@ -329,16 +329,15 @@ const Wallet = () => {
             </div>
           )}
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <Button 
+        
+      </Card>
+      {/* <Button 
             variant="outline" 
             className="w-full"
             onClick={() => window.open('https://db.aravt.io', '_blank')}
           >
-            Don't have a TON wallet?
-          </Button>
-        </CardFooter>
-      </Card>
+            Register TON Wallet
+          </Button> */}
     </div>
   );
 };
