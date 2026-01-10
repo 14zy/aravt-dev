@@ -18,7 +18,7 @@ interface LoginProps {
   onLoginSuccess?: () => void;
 }
 
-const Login = ({ onLoginSuccess }: LoginProps) => {
+const Login = ({ onLoginSuccess }: LoginProps): JSX.Element => {
   const normalizeUsername = (value: string): string => value.trim();
   const navigate = useNavigate();
   const setToken = useAuthStore(state => state.setToken);
@@ -39,7 +39,7 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
     try {
       const normalizedUsername = normalizeUsername(username);
       const { access_token, user } = await api.login(normalizedUsername, password);
-      setToken(access_token)
+      setToken(access_token);
       const current_user: User = await api.users_user(user.id);
 
       login(current_user, access_token);
@@ -133,11 +133,15 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
                   <Label htmlFor="username">Username</Label>
                   <Input
                     id="username"
-                    type="username"
+                    type="text"
                     placeholder=""
                     value={username}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                     onBlur={() => setUsername(prev => normalizeUsername(prev))}
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     required
                   />
                 </div>
@@ -148,6 +152,7 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
                     type="password"
                     value={password}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                    autoComplete="current-password"
                     required
                   />
                 </div>
