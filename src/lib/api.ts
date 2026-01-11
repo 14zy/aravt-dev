@@ -290,7 +290,7 @@ export const api = {
   },
 
   async send_invitation(email: string, aravt_id: number): Promise<MessageResponse> {
-    const response = await axios.post(`/aravt/${aravt_id}/invite/`, {
+    const response = await axios.post(`/aravt/${aravt_id}/invite`, {
       email,
       // aravt_id: aravtId,
       // referrer_id: referrerId
