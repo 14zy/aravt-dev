@@ -264,7 +264,7 @@ export const api = {
   },
 
   async aravt_set_offer(aravt_id: number, data: CreateOffer): Promise<MessageResponse> {
-    const res = await axios.post(`/aravt/${aravt_id}/set_offer/`, data);
+    const res = await axios.post(`/aravt/${aravt_id}/set_offer`, data);
     return res.data;
   },
 
