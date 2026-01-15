@@ -259,7 +259,7 @@ export const api = {
     aravt_id: number,
     data: Omit<Project, 'id'>
   ): Promise<MessageResponse> {
-    const res = await axios.post(`/aravt/${aravt_id}/set_business/`, data);
+    const res = await axios.post(`/aravt/${aravt_id}/set_business`, data);
     return res.data;
   },
 
