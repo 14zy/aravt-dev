@@ -104,12 +104,17 @@ const BrowseAravts = () => {
       )}
       </div>
       
+
+
+      
       <a
       href="/learn"
       className="inline-block text-blue-600 hover:underline font-medium"
       >
-      Create new Aravt
+      Learn more
       </a>
+
+
     </div>
   );
 };
