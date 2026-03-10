@@ -1,7 +1,8 @@
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { getInitials } from '@/lib/avatarUtils';
 import { useAuthStore } from '@/store/auth';
 import { useUserStore } from '@/store/user';
 import { AravtMember } from '@/types';
@@ -45,8 +46,11 @@ export const MemberCard = ({ canManage, aravtId, member, onRemoveMember, isLoadi
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4">
             <Avatar className="h-16 w-16">
+              {member.avatar_url && (
+                <AvatarImage src={member.avatar_url} alt={member.full_name} />
+              )}
               <AvatarFallback className="text-lg">
-                {member.username.substring(0, 2).toUpperCase()}
+                {getInitials(member.full_name || member.username)}
               </AvatarFallback>
             </Avatar>
             <div>

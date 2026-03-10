@@ -16,14 +16,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSelectedAravt } from '@/hooks/useSelectedAravt';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { getInitials } from '@/lib/avatarUtils';
 
 import { useAuthStore } from '@/store/auth';
 import { useUserStore } from '@/store/user';
 import type { UserAravtLink } from '@/types';
-import { X } from 'lucide-react';
+import { X, Camera } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -33,6 +35,8 @@ const Profile = () => {
   const [selectedSkill, setSelectedSkill] = useState<string>('');
   const [skillLevel, setSkillLevel] = useState<string>('1');
   const [experienceYears, setExperienceYears] = useState<string>('0');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const token = searchParams.get('token');
@@ -77,12 +81,117 @@ const Profile = () => {
     setExperienceYears('0');
   };
 
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAvatarUpload = async () => {
+    const fileInput = document.getElementById('avatar-upload') as HTMLInputElement;
+    const file = fileInput?.files?.[0];
+    
+    if (!user || !file) return;
+
+    try {
+      setIsUploadingAvatar(true);
+      await api.uploadUserAvatar(user.id, file);
+      await fetchUserProfile();
+      setAvatarPreview(null);
+      fileInput.value = '';
+    } catch (error) {
+      console.error('Failed to upload avatar:', error);
+      alert('Failed to upload avatar');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleAvatarDelete = async () => {
+    if (!user) return;
+
+    try {
+      setIsUploadingAvatar(true);
+      await api.deleteUserAvatar(user.id);
+      await fetchUserProfile();
+      setAvatarPreview(null);
+    } catch (error) {
+      console.error('Failed to delete avatar:', error);
+      alert('Failed to delete avatar');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   if (isLoading) return <LoadingSpinner />;
   if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow">
       <h2 className="text-2xl font-bold mb-4">My Profile</h2>
+      
+      {/* Avatar Section */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex flex-col items-center gap-4">
+            <Avatar className="h-24 w-24">
+              {user?.avatar_url && !avatarPreview && (
+                <AvatarImage src={user.avatar_url} alt={user.username} />
+              )}
+              {avatarPreview && (
+                <AvatarImage src={avatarPreview} alt="Preview" />
+              )}
+              <AvatarFallback className="text-2xl">
+                {getInitials(user?.full_name || user?.username)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => document.getElementById('avatar-upload')?.click()}
+                disabled={isUploadingAvatar}
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Change Avatar
+              </Button>
+              {user?.avatar_url && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAvatarDelete}
+                  disabled={isUploadingAvatar}
+                >
+                  Remove
+                </Button>
+              )}
+            </div>
+            {avatarPreview && (
+              <Button
+                onClick={handleAvatarUpload}
+                disabled={isUploadingAvatar}
+                className="w-full"
+              >
+                {isUploadingAvatar ? 'Uploading...' : 'Upload Avatar'}
+              </Button>
+            )}
+            <input
+              id="avatar-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarSelect}
+              className="hidden"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="space-y-2">
         <p><strong>Username:</strong> {user?.username}</p>
         <p><strong>Email:</strong> {user?.email}</p>

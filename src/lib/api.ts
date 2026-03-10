@@ -337,4 +337,27 @@ export const api = {
     );
     return response.data;
   },
+
+  async uploadUserAvatar(
+    userId: number,
+    file: File
+  ): Promise<User> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await axios.post(
+      `/users/user/${userId}/avatar`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  },
+
+  async deleteUserAvatar(userId: number): Promise<MessageResponse> {
+    const response = await axios.delete(`/users/user/${userId}/avatar`);
+    return response.data;
+  },
 };

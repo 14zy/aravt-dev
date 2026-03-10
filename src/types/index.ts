@@ -14,6 +14,7 @@ export interface UserSelf {
   skills: UserSkill[]
   aravts: AravtBrief[]
   wallet_address: string | null
+  avatar_url?: string | null
 }
 
 export interface User {
@@ -27,6 +28,7 @@ export interface User {
   skills: UserSkill[]
   aravts: UserAravtLink[]
   wallet_address: string | null
+  avatar_url?: string | null
 }
 
 export interface AravtListItem {
@@ -48,6 +50,7 @@ export interface UserShort {
   email?: string | null;
   date_of_birth?: string | null;
   is_deleted?: boolean;
+  avatar_url?: string | null;
   refered_by_id?: number | null;
 }
 

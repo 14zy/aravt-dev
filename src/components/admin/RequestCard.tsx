@@ -1,6 +1,7 @@
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { getInitials } from '@/lib/avatarUtils';
 import { UserShort } from '@/types';
 
 interface RequestCardProps {
@@ -22,8 +23,11 @@ export const RequestCard = ({ request, onApprove, onReject, isLoading }: Request
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Avatar className="h-12 w-12">
+            {request.user.avatar_url && (
+              <AvatarImage src={request.user.avatar_url} alt={request.user.full_name} />
+            )}
             <AvatarFallback>
-              {request.user.full_name}
+              {getInitials(request.user.full_name || request.user.username)}
             </AvatarFallback>
           </Avatar>
           <div>

@@ -1,10 +1,11 @@
 import JoinRequestForm from '@/components/client/JoinRequestForm';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getInitials } from '@/lib/avatarUtils';
 import { useAravtsStore } from '@/store/aravts';
 import { useAuthStore } from '@/store/auth';
 import type { AravtDetails as AravtDetailsType, AravtMember, Project } from '@/types';
@@ -119,7 +120,10 @@ const AravtDetails = () => {
           <CardContent>
             <div className="flex items-center gap-3">
               <Avatar>
-                <AvatarFallback>{aravtDetails.leader?.username?.[0] ?? '?'}</AvatarFallback>
+                {aravtDetails.leader?.avatar_url && (
+                  <AvatarImage src={aravtDetails.leader.avatar_url} alt={aravtDetails.leader.username} />
+                )}
+                <AvatarFallback>{getInitials(aravtDetails.leader?.full_name || aravtDetails.leader?.username)}</AvatarFallback>
               </Avatar>
               <div>
                 <p className="font-medium">{aravtDetails.leader?.username ?? '—'}</p>
@@ -139,7 +143,10 @@ const AravtDetails = () => {
               {aravtDetails.team.map((member: AravtMember) => (
                 <div key={member.id} className="flex items-center gap-3">
                   <Avatar>
-                    <AvatarFallback>{member.username[0]}</AvatarFallback>
+                    {member.avatar_url && (
+                      <AvatarImage src={member.avatar_url} alt={member.username} />
+                    )}
+                    <AvatarFallback>{getInitials(member.full_name || member.username)}</AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-medium">{member.username}</p>

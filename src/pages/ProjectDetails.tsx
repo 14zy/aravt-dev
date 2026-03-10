@@ -1,10 +1,11 @@
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getInitials } from '@/lib/avatarUtils';
 import { useAuthStore } from '@/store/auth';
 import { useOffersStore } from '@/store/offers';
 import {
@@ -240,8 +241,11 @@ const ProjectDetails = () => {
                 <div key={member.id} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Avatar>
+                      {(member as any).avatar && (
+                        <AvatarImage src={(member as any).avatar} alt={member.name} />
+                      )}
                       <AvatarFallback>
-                        {member.name.split(' ').map(n => n[0]).join('')}
+                        {getInitials(member.name)}
                       </AvatarFallback>
                     </Avatar>
                     <div>

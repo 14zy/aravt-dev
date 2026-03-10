@@ -1,11 +1,12 @@
 import CreateAravtForm from '@/components/client/CreateAravtForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Progress } from '@/components/ui/progress';
+import { getInitials } from '@/lib/avatarUtils';
 import useSelectedAravt from '@/hooks/useSelectedAravt';
 import { useAravtsStore } from '@/store/aravts';
 import { useAuthStore } from '@/store/auth';
@@ -170,7 +171,10 @@ const AravtDashboard = () => {
         <CardContent>
           <div className="flex items-center gap-2">
             <Avatar className="h-6 w-6">
-              <AvatarFallback className="text-xs">{aravtDetails?.leader?.username ?? '?'}</AvatarFallback>
+              {aravtDetails?.leader?.avatar_url && (
+                <AvatarImage src={aravtDetails.leader.avatar_url} alt={aravtDetails.leader.username} />
+              )}
+              <AvatarFallback className="text-xs">{getInitials(aravtDetails?.leader?.full_name || aravtDetails?.leader?.username)}</AvatarFallback>
             </Avatar>
             <div className="text-left">
               <p className="text-sm font-medium">{aravtDetails?.leader?.username ?? '—'}</p>
@@ -189,7 +193,10 @@ const AravtDashboard = () => {
             {aravtDetails?.team?.map((member: UserShort) => (
               <div key={member.id} className="flex items-center gap-2">
                 <Avatar className="h-6 w-6">
-                  <AvatarFallback className="text-xs">{member.username[0]}</AvatarFallback>
+                  {member.avatar_url && (
+                    <AvatarImage src={member.avatar_url} alt={member.username} />
+                  )}
+                  <AvatarFallback className="text-xs">{getInitials(member.full_name || member.username)}</AvatarFallback>
                 </Avatar>
                 <div className="text-left">
                   <p className="text-sm font-medium">{member.username}</p>

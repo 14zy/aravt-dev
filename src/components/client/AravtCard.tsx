@@ -1,7 +1,8 @@
 import JoinRequestForm from '@/components/client/JoinRequestForm';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { getInitials } from '@/lib/avatarUtils';
 import { useAravtsStore } from '@/store/aravts';
 import { AravtDetails, AravtListItem, Project } from '@/types';
 import { Users } from 'lucide-react';
@@ -95,7 +96,10 @@ const AravtCard = ({ aravt }: AravtCardProps) => {
               <h4 className="font-medium text-left text-sm text-gray-500">Leader</h4>
               <div className="flex items-center gap-2 mt-1">
                 <Avatar className="h-6 w-6">
-                  <AvatarFallback>{detailedAravt.leader?.username ?? '?'}</AvatarFallback>
+                  {detailedAravt.leader?.avatar_url && (
+                    <AvatarImage src={detailedAravt.leader.avatar_url} alt={detailedAravt.leader.username} />
+                  )}
+                  <AvatarFallback>{getInitials(detailedAravt.leader?.full_name || detailedAravt.leader?.username)}</AvatarFallback>
                 </Avatar>
                 <span>{detailedAravt.leader?.username ?? '—'}</span>
               </div>
