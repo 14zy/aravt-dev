@@ -43,24 +43,25 @@ export default function Layout() {
                 <div className="flex sm:flex">
                   {user && (hasAravt ? (
                     <div className="">
-                      <NavLink to="/browse">Aravts</NavLink>
-                      <NavLink to={`/dashboard/${effectiveAravtId}`}>Dashboard</NavLink>
-                      <NavLink to={`/members/${effectiveAravtId}`}>Members</NavLink>
-                      <NavLink to="/projects">Business</NavLink>
-                      <NavLink to="/tasks">Tasks</NavLink>
-                      <NavLink to="/offers">Offers</NavLink>
-                      <NavLink to="/wallet">Wallet</NavLink>
-                      <NavLink to="/Learn">Learn</NavLink>
+                      <NavLink to="/browse">🌀 Aravts</NavLink>
+                      <NavLink to={`/dashboard/${effectiveAravtId}`}>🎛️ Dashboard</NavLink>
+                      <NavLink to={`/members/${effectiveAravtId}`}>👫 Members</NavLink>
+                      <NavLink to="/projects">🧑‍💻 Projects</NavLink>
+                      <NavLink to="/tasks">📝 Tasks</NavLink>
+                      <NavLink to="/offers">🪙 Offers</NavLink>
+                      <NavLink to="/wallet">👛 Wallet</NavLink>
+                      <NavLink to="/Learn">📚 Learn</NavLink>
                       {isAdmin && <NavLink to="/admin">Admin</NavLink>}
-                      <NavLink to="/profile">{user.username}</NavLink>
+                      <NavLink to="/profile">👤 Profile</NavLink>
+                      {/* <NavLink to="/profile">{user.username}</NavLink> */}
                     </div>
                   ) : (
                     <div className="flex sm:flex-row">
-                      <NavLink to="/browse">Aravts</NavLink>
-                      <NavLink to="/offers">Offers</NavLink>
-                      <NavLink to="/wallet">Wallet</NavLink>
-                      <NavLink to="/Learn">Learn</NavLink>
-                      <NavLink to="/profile">{user.username}</NavLink>
+                      <NavLink to="/browse">🌀 Aravts</NavLink>
+                      <NavLink to="/offers">🪙 Offers</NavLink>
+                      <NavLink to="/wallet">👛 Wallet</ NavLink>
+                      <NavLink to="/Learn">📚 Learn</NavLink>
+                      <NavLink to="/profile">👤 Profile</NavLink>
                     </div>
                   ))}
                 </div>
