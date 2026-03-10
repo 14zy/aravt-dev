@@ -49,7 +49,7 @@ const Login = ({ onLoginSuccess }: LoginProps): JSX.Element => {
         useAuthStore.getState().setReferralInfo(null);
         navigate(`/aravts/${referralInfo.aravtId}`);
       } else if ((current_user.aravts ?? []).length > 0) {
-        navigate('/dashboard');
+        navigate('/browse');
       } else {
         navigate('/browse');
       }

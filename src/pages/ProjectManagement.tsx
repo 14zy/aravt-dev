@@ -34,7 +34,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
             </div>
           </div>
           <Badge variant={project.status === 'BusinessStatus.Posted' ? 'default' : 'secondary'}>
-            Active {project.status}
+            Active 
           </Badge>
         </div>
       </CardHeader>
