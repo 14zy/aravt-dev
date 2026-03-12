@@ -1,11 +1,11 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { getInitials } from '@/lib/avatarUtils';
-import { useAuthStore } from '@/store/auth';
-import { useUserStore } from '@/store/user';
-import { AravtMember } from '@/types';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { getInitials } from "@/lib/avatarUtils";
+import { useAuthStore } from "@/store/auth";
+import { useUserStore } from "@/store/user";
+import { AravtMember } from "@/types";
 
 interface MemberCardProps {
   canManage: boolean;
@@ -15,7 +15,13 @@ interface MemberCardProps {
   isLoading?: boolean;
 }
 
-export const MemberCard = ({ canManage, aravtId, member, onRemoveMember, isLoading }: MemberCardProps) => {
+export const MemberCard = ({
+  canManage,
+  aravtId,
+  member,
+  onRemoveMember,
+  isLoading,
+}: MemberCardProps) => {
   const { letUserCreateAravt } = useUserStore();
   const { user } = useAuthStore();
   const isSelf = user?.id === member.id;
@@ -29,8 +35,12 @@ export const MemberCard = ({ canManage, aravtId, member, onRemoveMember, isLoadi
     }
   };
 
+  console.log(member);
+
   // Handler for updating the ability to create tasks
-  const handleTasksChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTasksChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const newValue = event.target.checked;
     try {
       console.log("Not implemented: Updating Tasks permission", newValue);
@@ -62,9 +72,13 @@ export const MemberCard = ({ canManage, aravtId, member, onRemoveMember, isLoadi
                   <Badge variant="secondary">User</Badge>
                 )}
               </div>
-              <div className="text-sm text-muted-foreground">{member.email}</div>
+              <div className="text-sm text-muted-foreground">
+                {member.email}
+              </div>
               {member.city && (
-                <div className="text-sm text-muted-foreground mt-1">{member.city}</div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  {member.city}
+                </div>
               )}
             </div>
           </div>
@@ -72,26 +86,25 @@ export const MemberCard = ({ canManage, aravtId, member, onRemoveMember, isLoadi
         <div className="mt-4">
           {canManage && !isSelf && (
             <>
-            <div className="flex items-center">
-                <input 
-                  type="checkbox" 
-                  checked={member.able_to_create_tasks} 
-                  onChange={handleTasksChange} 
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={member.able_to_create_tasks}
+                  onChange={handleTasksChange}
                   disabled={isLoading}
                 />
                 <label className="ml-2">Can Create Tasks</label>
               </div>
-              
+
               <div className="flex items-center">
-                <input 
-                  type="checkbox" 
-                  checked={member.able_to_create_aravt} 
-                  onChange={handleAravtChange} 
+                <input
+                  type="checkbox"
+                  checked={member.able_to_create_aravt}
+                  onChange={handleAravtChange}
                   disabled={isLoading}
                 />
                 <label className="ml-2">Can Create his own Aravt</label>
               </div>
-              
             </>
           )}
         </div>
@@ -102,7 +115,7 @@ export const MemberCard = ({ canManage, aravtId, member, onRemoveMember, isLoadi
           </div>
           <div>
             <div className="text-sm font-medium">Rating</div>
-            <div className="text-2xl font-bold">10</div>
+            <div className="text-2xl font-bold">{member.rating}</div>
           </div>
           {/* <div>
             <div className="text-sm font-medium">Success Rate</div>
@@ -113,7 +126,7 @@ export const MemberCard = ({ canManage, aravtId, member, onRemoveMember, isLoadi
             </div>
           </div> */}
           <div>
-            <div className="text-sm font-medium">Tokens</div>
+            <div className="text-sm font-medium">Earnings</div>
             <div className="text-2xl font-bold">100</div>
           </div>
         </div>
@@ -147,4 +160,4 @@ export const MemberCard = ({ canManage, aravtId, member, onRemoveMember, isLoadi
       </CardContent>
     </Card>
   );
-}; 
+};

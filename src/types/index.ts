@@ -4,31 +4,33 @@ export interface UserSkill extends Skill {
 }
 
 export interface UserSelf {
-  id: number
-  username: string
-  email?: string
-  city?: string
-  date_of_birth?: string
-  full_name?: string
-  is_active: boolean
-  skills: UserSkill[]
-  aravts: AravtBrief[]
-  wallet_address: string | null
-  avatar_url?: string | null
+  id: number;
+  username: string;
+  email?: string;
+  city?: string;
+  date_of_birth?: string;
+  full_name?: string;
+  rating?: number | null;
+  is_active: boolean;
+  skills: UserSkill[];
+  aravts: AravtBrief[];
+  wallet_address: string | null;
+  avatar_url?: string | null;
 }
 
 export interface User {
-  id: number
-  username: string
-  email?: string
-  city?: string
-  date_of_birth?: string
-  full_name?: string
-  is_active: boolean
-  skills: UserSkill[]
-  aravts: UserAravtLink[]
-  wallet_address: string | null
-  avatar_url?: string | null
+  id: number;
+  username: string;
+  email?: string;
+  city?: string;
+  date_of_birth?: string;
+  full_name?: string;
+  rating?: number | null;
+  is_active: boolean;
+  skills: UserSkill[];
+  aravts: UserAravtLink[];
+  wallet_address: string | null;
+  avatar_url?: string | null;
 }
 
 export interface AravtListItem {
@@ -45,6 +47,7 @@ export interface UserShort {
   id: number;
   username: string;
   full_name: string;
+  rating?: number | null;
   city: string;
   is_active: boolean;
   email?: string | null;
@@ -102,20 +105,20 @@ export interface AravtBrief {
 
 export interface Feature {
   id: number;
-  type: 'community' | 'tasks' | 'rewards';
+  type: "community" | "tasks" | "rewards";
   title: string;
   description: string;
   badge: string;
-  badgeVariant?: 'default' | 'secondary' | 'destructive';
+  badgeVariant?: "default" | "secondary" | "destructive";
 }
 
 export interface RegistrationData {
-  username: string
-  email: string
-  password: string
-  city: string
-  date_of_birth: string
-  full_name: string
+  username: string;
+  email: string;
+  password: string;
+  city: string;
+  date_of_birth: string;
+  full_name: string;
 }
 
 export interface CreateAravt {
@@ -125,26 +128,26 @@ export interface CreateAravt {
 }
 
 export interface Task {
-  id: number,
-  title: string,
-  description: string,
-  link?: string,
-  reward: number,
-  reward_type: 'AT' | 'USDT';
-  definition_of_done: Record<string, unknown>,
-  responsible_users_ids: number[],
-  is_done: boolean,
-  is_global: boolean
-  date_time: string
-  priority: 'low' | 'medium' | 'high';
+  id: number;
+  title: string;
+  description: string;
+  link?: string;
+  reward: number;
+  reward_type: "AT" | "USDT";
+  definition_of_done: Record<string, unknown>;
+  responsible_users_ids: number[];
+  is_done: boolean;
+  is_global: boolean;
+  date_time: string;
+  priority: "low" | "medium" | "high";
   one_time: boolean;
   business?: Project | null;
   business_id?: number;
   completions: {
-    completions_amount: number,
-    is_completion_approved: boolean,
-    num_of_approved: number
-  }
+    completions_amount: number;
+    is_completion_approved: boolean;
+    num_of_approved: number;
+  };
 }
 
 export interface TasksGroupOut {
@@ -158,7 +161,9 @@ export interface TasksGroupedListOut {
   tasks_groups: TasksGroupOut[];
 }
 
-export type ProjectStatus = 'BusinessStatus.Posted' | 'BusinessStatus.NotPosted';
+export type ProjectStatus =
+  | "BusinessStatus.Posted"
+  | "BusinessStatus.NotPosted";
 
 export interface Project {
   id: number;
@@ -213,11 +218,11 @@ export interface CreateOffer {
 }
 
 export interface JoinRequest {
-  id: number,
-  aravt_id: number,
-  user: UserShort,
-  text: string,
-  date_time: string
+  id: number;
+  aravt_id: number;
+  user: UserShort;
+  text: string;
+  date_time: string;
 }
 
 export interface ApplicationOut {
@@ -242,13 +247,13 @@ export interface JoinRequestWithAravt extends JoinRequest {
 }
 
 export interface TaskCompletion {
-  id: number,
-  task: Partial<Task>,
-  user: Partial<User>,
-  body: Record<string, unknown>,
-  completed_at: string,
-  is_approved: boolean,
-  reward_paid: boolean
+  id: number;
+  task: Partial<Task>;
+  user: Partial<User>;
+  body: Record<string, unknown>;
+  completed_at: string;
+  is_approved: boolean;
+  reward_paid: boolean;
 }
 
 export interface Skill {
