@@ -35,8 +35,6 @@ export const MemberCard = ({
     }
   };
 
-  console.log(member);
-
   // Handler for updating the ability to create tasks
   const handleTasksChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
