@@ -27,6 +27,7 @@ export interface User {
   full_name?: string;
   rating?: number | null;
   is_active: boolean;
+  is_deleted: boolean;
   skills: UserSkill[];
   aravts: UserAravtLink[];
   wallet_address: string | null;
