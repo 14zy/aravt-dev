@@ -1,6 +1,6 @@
-import { api } from '@/lib/api';
-import { Task, TasksGroupedListOut } from '@/types';
-import { create } from 'zustand';
+import { api } from "@/lib/api";
+import { Task, TasksGroupedListOut } from "@/types";
+import { create } from "zustand";
 
 interface TasksState {
   localTasks: Task[];
@@ -21,19 +21,26 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const grouped: TasksGroupedListOut = await api.tasks_get_tasks();
-      const all: Task[] = (grouped.tasks_groups || []).flatMap(g => [
+
+      const all: Task[] = (grouped.tasks_groups || []).flatMap((g) => [
         ...(g.tasks || []),
         ...(g.parents_tasks || []),
-        ...(g.other_tasks || []),
+        // ...(g.other_tasks || []),
       ]);
-      const LocalTasks: Task[] = all.filter(t => !t.is_global);
-      const GlobalTasks: Task[] = all.filter(t => t.is_global);
-      set({ localTasks: LocalTasks, globalTasks: GlobalTasks, isLoading: false });
+
+      const LocalTasks: Task[] = all.filter((t) => !t.is_global);
+      const GlobalTasks: Task[] = all.filter((t) => t.is_global);
+
+      set({
+        localTasks: LocalTasks,
+        globalTasks: GlobalTasks,
+        isLoading: false,
+      });
     } catch (error) {
       if (error instanceof Error) {
         set({ error: error.message, isLoading: false });
       } else {
-        set({ error: 'Failed to fetch dashboard data', isLoading: false });
+        set({ error: "Failed to fetch dashboard data", isLoading: false });
       }
     }
   },
@@ -42,12 +49,10 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       await api.tasks_update_task(taskId, { is_done: true });
-      
+
       const state = get();
       const updateTasks = (tasks: Task[]) =>
-        tasks.map(task =>
-          task.id === taskId ? { ...task, is_done } : task
-        );
+        tasks.map((task) => (task.id === taskId ? { ...task, is_done } : task));
 
       set({
         localTasks: updateTasks(state.localTasks),
@@ -58,8 +63,8 @@ export const useTasksStore = create<TasksState>((set, get) => ({
       if (error instanceof Error) {
         set({ error: error.message, isLoading: false });
       } else {
-        set({ error: 'Failed to update task completion', isLoading: false });
+        set({ error: "Failed to update task completion", isLoading: false });
       }
     }
   },
-})); 
+}));

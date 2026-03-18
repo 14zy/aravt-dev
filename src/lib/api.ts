@@ -251,7 +251,7 @@ export const api = {
 
   async tasks_completions_for_task(
     task_completion_id: number,
-  ): Promise<TaskCompletion> {
+  ): Promise<TaskCompletion[]> {
     const response = await axios.get(
       `/tasks/completions_for_task/${task_completion_id}`,
     );
