@@ -5,8 +5,8 @@ import { Card } from '@/components/ui/card';
 import { getInitials } from '@/lib/avatarUtils';
 import { useAravtsStore } from '@/store/aravts';
 import { AravtDetails, AravtListItem, Project } from '@/types';
-import { Users } from 'lucide-react';
-import { useState } from 'react';
+import { Briefcase, Tag, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 
 interface AravtCardProps {
@@ -20,6 +20,12 @@ const AravtCard = ({ aravt }: AravtCardProps) => {
   const [isJoining, setIsJoining] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { fetchAravtDetails, applyToAravt } = useAravtsStore();
+
+  useEffect(() => {
+    fetchAravtDetails(aravt.id)
+      .then(setDetailedAravt)
+      .catch(() => {/* silently ignore background fetch errors */});
+  }, [aravt.id, fetchAravtDetails]);
 
   const handleExpandClick = async () => {
     if (!isExpanded && !detailedAravt) {
@@ -61,12 +67,40 @@ const AravtCard = ({ aravt }: AravtCardProps) => {
             <div className="space-y-1">
               <h3 className="text-lg text-left font-semibold">{aravt.id}. {aravt.name}</h3>
               <p className="text-gray-500 text-left ">{aravt.description}</p>
+
+              {/* Business Projects */}
+              {detailedAravt?.business && detailedAravt.business.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {detailedAravt.business.map((project: Project) => (
+                    <div key={project.id} className="flex items-center gap-1 text-sm bg-blue-50 text-blue-700 rounded-full px-3 py-0.5">
+                      <Briefcase className="h-3 w-3 shrink-0" />
+                      <span className="truncate max-w-[180px]">
+                        {project.link ? (
+                          <a href={project.link} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                            {project.name}
+                          </a>
+                        ) : project.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Offers */}
+              {detailedAravt?.offers && detailedAravt.offers.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {detailedAravt.offers.map((offer) => (
+                    <div key={offer.id} className="flex items-center gap-1 text-sm bg-green-50 text-green-700 rounded-full px-3 py-0.5">
+                      <Tag className="h-3 w-3 shrink-0" />
+                      <span className="truncate max-w-[180px]">{offer.name}</span>
+                      <span className="text-green-500 font-medium">{offer.price} USD</span>
+                    </div>
+                  ))}
+                </div>
+              )}
               
               {/* Additional Basic Info */}
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 text-sm">
-                
-                
-                
                 {aravt.is_draft !== undefined && (
                   <div>
                     <span className="text-gray-500">Status:</span>

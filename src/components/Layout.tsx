@@ -55,8 +55,8 @@ export default function Layout() {
                   {user &&
                     (hasAravt ? (
                       <div className="">
-                        <NavLink to="/browse">🌀 Aravts</NavLink>
-                        <NavLink to="/Learn">📚 Learn</NavLink>
+                        <NavLink to="/browse">🌀 Aravts (6)</NavLink>
+                        <NavLink to="/Learn">📚 Univrsity</NavLink>
                         {isAdmin && <NavLink to="/admin">Admin</NavLink>}
                       </div>
                     ) : (
