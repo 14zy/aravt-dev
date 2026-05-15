@@ -83,7 +83,7 @@ const Login = ({ onLoginSuccess }: LoginProps): JSX.Element => {
 
           </div>
           <CardDescription>
-            Please login to your account or sign up for new one
+            Please log in or register to continue
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -165,7 +165,7 @@ const Login = ({ onLoginSuccess }: LoginProps): JSX.Element => {
                     'Signing in...'
                   ) : (
                     <>
-                      Sign in
+                      Log in
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </>
                   )}
@@ -200,12 +200,12 @@ const Login = ({ onLoginSuccess }: LoginProps): JSX.Element => {
               </form>
 
               <div className="relative w-full mt-4 pt-4">
-                <b>Video</b>
+                <b>Introduction</b>
 
                 <iframe
                   width="560"
                   height="315"
-                  src="https://www.youtube.com/embed/80kMVEKaeaM?si=q7QAVa2Fv3nyRtxt"
+                  src="https://www.youtube.com/embed/wUE58WtpcAc?si=uX2H-7UJMIvOvSAf"
                   title="YouTube video player"
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
