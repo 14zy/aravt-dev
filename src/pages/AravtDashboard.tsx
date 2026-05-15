@@ -2,29 +2,34 @@ import { MemberCard } from '@/components/admin/MemberCard';
 import { RequestCard } from '@/components/admin/RequestCard';
 import CreateAravtForm from '@/components/client/CreateAravtForm';
 import { CreateProjectDialog } from '@/components/client/CreateProjectDialog';
+import { TaskCard } from '@/components/client/TaskCard';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import useSelectedAravt from '@/hooks/useSelectedAravt';
 import { getInitials } from '@/lib/avatarUtils';
+import { api } from '@/lib/api';
 import { isUserLeaderOfAravt } from '@/lib/permissions';
 import { useAdminStore } from '@/store/admin';
 import { useAravtsStore } from '@/store/aravts';
 import { useOffersStore } from '@/store/offers';
 import { useProjectsStore } from '@/store/projects';
+import { useTasksStore } from '@/store/tasks';
 import { useAuthStore } from '@/store/auth';
 import { useDashboardStore } from '@/store/dashboard';
-import type { AravtOffer, Project, UserShort } from '@/types';
-import { Banknote, ListTodo, Plus, Search, Users } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import type { AravtOffer, Project, Task } from '@/types';
+import { Bell, Banknote, Globe, Home, Plus, Search } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
@@ -74,89 +79,6 @@ const ProjectCard = ({ project }: { project: Project }) => {
   );
 };
 
-const StatCard = ({ title, value, icon: Icon, progress }: {
-  title: string;
-  value: string | number;
-  icon: React.ElementType;
-  progress?: number;
-}) => (
-  <Card>
-    <CardContent className="pt-6">
-      <div className="flex justify-between items-center mb-2">
-        <p className="text-sm text-muted-foreground">{title}</p>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </div>
-      <div className="text-2xl font-semibold">{value}</div>
-      {progress !== undefined && (
-        <Progress value={progress} className="h-1 mt-2" />
-      )}
-    </CardContent>
-  </Card>
-);
-
-const ActivityFeed = () => (
-  <Card>
-    <CardHeader>
-      <CardTitle>Recent Activity</CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      <div className="flex items-center gap-4 text-sm">
-        <div>
-          <Avatar className="h-10 w-10">
-            <AvatarFallback>U1</AvatarFallback>
-          </Avatar>
-        </div>
-        <div className="flex-1">
-          <p className="font-medium">New task completed</p>
-          <p className="text-gray-500">User completed Task #123</p>
-        </div>
-        <span className="text-gray-400 text-xs">2h ago</span>
-      </div>
-    </CardContent>
-  </Card>
-);
-
-const QuickActions = () => (
-  /* To do
-  <Card>
-    <CardHeader>
-      <CardTitle>Quick Actions</CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-2">
-      <Button variant="outline">
-        <span className="flex items-center">
-          <Users className="mr-2 h-4 w-4" />
-          Manage Team
-        </span>
-        <ChevronRight className="h-4 w-4" />
-      </Button>
-      <Button variant="outline">
-        <span className="flex items-center">
-          <ListTodo className="mr-2 h-4 w-4" />
-          Create Task
-        </span>
-        <ChevronRight className="h-4 w-4" />
-      </Button>
-    </CardContent>
-  </Card>
-  */
-  <Card>
-    <CardHeader className="pb-2">
-      <CardTitle className="text-sm">Quick Actions</CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-1">
-      <Button variant="outline" size="sm" className="w-full justify-start text-sm">
-        <Users className="mr-2 h-3 w-3" />
-        Manage Team
-      </Button>
-      <Button variant="outline" size="sm" className="w-full justify-start text-sm">
-        <ListTodo className="mr-2 h-3 w-3" />
-        Create Task
-      </Button>
-    </CardContent>
-  </Card>
-);
-
 const AravtDashboard = () => {
   const { stats, isLoading: dashboardLoading, error: dashboardError, fetchDashboardData } = useDashboardStore();
   const { aravtDetails, isLoading: aravtLoading } = useAravtsStore();
@@ -165,6 +87,11 @@ const AravtDashboard = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [isInviting, setIsInviting] = useState(false);
+  const [showCreateTaskForm, setShowCreateTaskForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [businesses, setBusinesses] = useState<Project[]>([]);
   const params = useParams();
   const navigate = useNavigate();
   const { currentAravtId, setCurrentAravtId, currentAravt } = useSelectedAravt();
@@ -183,6 +110,7 @@ const AravtDashboard = () => {
 
   const { projects, isLoading: projectsLoading, fetchProjectsForAravt } = useProjectsStore();
   const { fetchOffers } = useOffersStore();
+  const { localTasks, globalTasks, isLoading: tasksLoading, error: tasksError, fetchTasksData, updateTaskIsDone } = useTasksStore();
 
   const urlAravtId = useMemo((): number | undefined => {
     if (!params.aravtId) return undefined;
@@ -199,6 +127,59 @@ const AravtDashboard = () => {
   }, [user?.aravts, currentAravtId]);
 
   const isLeader = useMemo(() => isUserLeaderOfAravt(user, currentAravtId), [user, currentAravtId]);
+
+  const handleCreateTask = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      const formData = new FormData(e.currentTarget);
+      const responsibleUsers = formData.get('responsible_users_ids') as string;
+      const responsible_users_ids = responsibleUsers
+        ? responsibleUsers.trim().startsWith('[')
+          ? JSON.parse(responsibleUsers)
+          : responsibleUsers.split(',').map((id) => Number(id.trim()))
+        : [];
+      const taskData = {
+        title: formData.get('title') as string,
+        description: formData.get('description') as string,
+        link: (formData.get('link') as string) || '',
+        reward: Math.floor(Number(formData.get('reward'))),
+        reward_type: (formData.get('reward_type') === 'AT' ? 'AT' : 'USDT') as 'AT' | 'USDT',
+        definition_of_done: JSON.parse((formData.get('definition_of_done') as string) || '{}'),
+        responsible_users_ids,
+        is_done: false,
+        is_global: formData.get('is_global') === 'true',
+        date_time: formData.get('deadline') as string,
+        priority: formData.get('priority') as 'low' | 'medium' | 'high',
+        one_time: formData.get('one_time') === 'true',
+        business_id: formData.get('business_id') ? Number(formData.get('business_id')) : undefined,
+        completions: { completions_amount: 0, is_completion_approved: false, num_of_approved: 0 },
+      };
+      if (!currentAravtId) throw new Error('No aravt selected');
+      await api.tasks_set_task(currentAravtId, taskData);
+      await fetchTasksData();
+      setShowCreateTaskForm(false);
+    } catch (err) {
+      console.error('Error creating task:', err);
+    }
+  };
+
+  const filterTasks = useCallback(
+    (tasks: Task[]) => tasks.filter((task) => {
+      const matchesSearch =
+        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task.description.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus =
+        statusFilter === 'all' ||
+        (statusFilter === 'completed' && task.is_done) ||
+        (statusFilter === 'open' && !task.is_done);
+      const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
+      return matchesSearch && matchesStatus && matchesPriority;
+    }),
+    [searchQuery, statusFilter, priorityFilter],
+  );
+
+  const filteredLocalTasks = useMemo(() => filterTasks(localTasks), [localTasks, filterTasks]);
+  const filteredGlobalTasks = useMemo(() => filterTasks(globalTasks), [globalTasks, filterTasks]);
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -245,25 +226,45 @@ const AravtDashboard = () => {
     }
   }, [currentAravtId, fetchProjectsForAravt, fetchOffers]);
 
+  useEffect(() => {
+    fetchTasksData();
+  }, [fetchTasksData]);
+
+  useEffect(() => {
+    const fetchBusinesses = async () => {
+      if (currentAravtId) {
+        try {
+          const aravtData = await api.aravt_aravt(currentAravtId);
+          setBusinesses(aravtData.business || []);
+        } catch (err) {
+          console.error('Error fetching businesses:', err);
+        }
+      }
+    };
+    fetchBusinesses();
+  }, [currentAravtId]);
+
   if (dashboardLoading || aravtLoading) {
     return <LoadingSpinner />;
   }
 
   return (
-    <div className="mx-auto py-4 px-3 space-y-4">
-      <div className=" items-center">
+    <div className="py-4">
+      <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold">{(currentAravt?.name) ?? aravtDetails?.name} (#{(currentAravt?.id) ?? aravtDetails?.id})</h1>
           <p className="text-gray-500"><b>{user?.username}</b> dashboard</p>
         </div>
-        {/* <div className="flex gap-1">
+        <div className="relative">
           <Button variant="outline" size="sm">
             <Bell className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm">
-            <Settings className="h-4 w-4" />
-          </Button>
-        </div> */}
+          {isLeader && pendingRequests.length > 0 && (
+            <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+              {pendingRequests.length}
+            </span>
+          )}
+        </div>
       </div>
 
       {dashboardError && (
@@ -272,7 +273,6 @@ const AravtDashboard = () => {
         </Alert>
       )}
 
-      
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Leadership</CardTitle>
@@ -408,7 +408,203 @@ const AravtDashboard = () => {
           </CardContent>
         </Card>
       )}
-      
+
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Tasks</CardTitle>
+            <Button size="sm" onClick={() => setShowCreateTaskForm(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Task
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {tasksError && (
+            <Alert variant="destructive">
+              <AlertDescription>{tasksError}</AlertDescription>
+            </Alert>
+          )}
+          {showCreateTaskForm && (
+            <Dialog open={showCreateTaskForm} onOpenChange={setShowCreateTaskForm}>
+              <DialogContent className="max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Create New Task</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleCreateTask}>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="title">Title *</Label>
+                      <Input id="title" name="title" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="description">Description *</Label>
+                      <Textarea id="description" name="description" required />
+                    </div>
+                    <div>
+                      <Label htmlFor="link">URL</Label>
+                      <Input id="link" name="link" placeholder="https://" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="priority">Priority</Label>
+                        <Select name="priority" defaultValue="medium">
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="is_global">Visibility</Label>
+                        <Select name="is_global" defaultValue="false">
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="false">Local</SelectItem>
+                            <SelectItem value="true">Global</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="one_time">Completions</Label>
+                        <Select name="one_time" defaultValue="true">
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="true">One Completion</SelectItem>
+                            <SelectItem value="false">Many Completions</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="reward">Reward amount *</Label>
+                        <div className="flex gap-2">
+                          <Input id="reward" name="reward" type="number" step="1" min="0" required placeholder="0" defaultValue={1} className="flex-1" />
+                          <div className="w-24">
+                            <Select name="reward_type" defaultValue="AT">
+                              <SelectTrigger><SelectValue placeholder="Type" /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="AT">AT</SelectItem>
+                                <SelectItem value="USDT">USDT</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                      <div hidden>
+                        <Label htmlFor="deadline">Deadline</Label>
+                        <Input id="deadline" name="deadline" type="datetime-local" />
+                      </div>
+                    </div>
+                    <div className="space-y-4 pt-2 border-t">
+                      <div>
+                        <Label htmlFor="business_id">Project</Label>
+                        <Select name="business_id">
+                          <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="project_id">All</SelectItem>
+                            {businesses.map((business) => (
+                              <SelectItem key={business.id} value={business.id.toString()}>
+                                {business.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Input id="definition_of_done" name="definition_of_done" defaultValue="{}" type="hidden" />
+                      <Input id="responsible_users_ids" name="responsible_users_ids" type="hidden" />
+                    </div>
+                  </div>
+                  <DialogFooter className="mt-6">
+                    <Button type="button" variant="outline" onClick={() => setShowCreateTaskForm(false)}>Cancel</Button>
+                    <Button type="submit">Create Task</Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
+          {tasksLoading ? (
+            <div className="py-8 flex justify-center"><LoadingSpinner /></div>
+          ) : (
+            <Tabs defaultValue="local">
+              <TabsList>
+                <TabsTrigger value="local" className="flex items-center gap-2">
+                  <Home className="h-4 w-4 text-green-500" />
+                  Local ({filteredLocalTasks.length})
+                </TabsTrigger>
+                <TabsTrigger value="global" className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-blue-500" />
+                  Global ({filteredGlobalTasks.length})
+                </TabsTrigger>
+              </TabsList>
+              <div className="mt-4 flex flex-col md:flex-row md:items-center gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input placeholder="Search tasks..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                </div>
+                <div className="flex gap-2">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[130px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="open">Open</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                    <SelectTrigger className="w-[130px]"><SelectValue placeholder="Priority" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Priority</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <TabsContent value="local" className="mt-4">
+                <div className="grid grid-cols-1 gap-4">
+                  {filteredLocalTasks.map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onUpdate={async (taskId, updates) => {
+                        await updateTaskIsDone(taskId, updates.is_done || false);
+                        await fetchTasksData();
+                      }}
+                      isLoading={tasksLoading}
+                    />
+                  ))}
+                  {filteredLocalTasks.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">No local tasks found</div>
+                  )}
+                </div>
+              </TabsContent>
+              <TabsContent value="global" className="mt-4">
+                <div className="grid grid-cols-1 gap-4">
+                  {filteredGlobalTasks.map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      onUpdate={async (taskId, updates) => {
+                        await updateTaskIsDone(taskId, updates.is_done || false);
+                        await fetchTasksData();
+                      }}
+                      isLoading={tasksLoading}
+                    />
+                  ))}
+                  {filteredGlobalTasks.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">No global tasks found</div>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="pb-2">
@@ -426,11 +622,6 @@ const AravtDashboard = () => {
           */}
         </CardContent>
       </Card>
-
-
-      
-
-      
 
       {aravtDetails && (
         <Card>
@@ -497,10 +688,6 @@ const AravtDashboard = () => {
           </CardContent>
         </Card>
       )}
-
-      
-
-      {/* <QuickActions /> */}
 
       <Card>
         <CardHeader>

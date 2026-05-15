@@ -45,7 +45,7 @@ export default function Layout() {
     !headerExcludedPaths.includes(location.pathname) && Boolean(user);
 
   return (
-    <div className="min-h-screen w-full flex flex-col">
+    <div className="min-h-screen w-full flex flex-col pb-24">
       {isNeedHeader && (
         <header className="bg-white shadow w-full h-14 navbar sm:h-16">
           <nav className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
@@ -56,7 +56,6 @@ export default function Layout() {
                     (hasAravt ? (
                       <div className="">
                         <NavLink to="/browse">🌀 Aravts</NavLink>
-                        <NavLink to="/tasks">📝 Tasks</NavLink>
                         <NavLink to="/Learn">📚 Learn</NavLink>
                         {isAdmin && <NavLink to="/admin">Admin</NavLink>}
                       </div>
