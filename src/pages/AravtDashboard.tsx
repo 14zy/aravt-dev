@@ -1,23 +1,78 @@
+import { MemberCard } from '@/components/admin/MemberCard';
+import { RequestCard } from '@/components/admin/RequestCard';
 import CreateAravtForm from '@/components/client/CreateAravtForm';
+import { CreateProjectDialog } from '@/components/client/CreateProjectDialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Progress } from '@/components/ui/progress';
-import { getInitials } from '@/lib/avatarUtils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import useSelectedAravt from '@/hooks/useSelectedAravt';
+import { getInitials } from '@/lib/avatarUtils';
+import { isUserLeaderOfAravt } from '@/lib/permissions';
+import { useAdminStore } from '@/store/admin';
 import { useAravtsStore } from '@/store/aravts';
+import { useOffersStore } from '@/store/offers';
+import { useProjectsStore } from '@/store/projects';
 import { useAuthStore } from '@/store/auth';
 import { useDashboardStore } from '@/store/dashboard';
 import type { AravtOffer, Project, UserShort } from '@/types';
-import {
-  ListTodo,
-  Users
-} from 'lucide-react';
+import { Banknote, ListTodo, Plus, Search, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
+
+const ProjectCard = ({ project }: { project: Project }) => {
+  const navigate = useNavigate();
+  const { offers } = useOffersStore();
+  const projectOffers = offers.filter(offer => offer.business.id === project.id);
+
+  return (
+    <Card>
+      <CardHeader className="p-4">
+        <div className="flex justify-between items-start">
+          <div className="flex items-center">
+            {project.logo && (
+              <img src={project.logo} alt={`${project.name} logo`} className="h-8 w-8 mr-2" />
+            )}
+            <div>
+              <CardTitle className="text-lg text-left">{project.name}</CardTitle>
+              <CardDescription>{project.description}</CardDescription>
+            </div>
+          </div>
+          <Badge variant={project.status === 'BusinessStatus.Posted' ? 'default' : 'secondary'}>
+            Active
+          </Badge>
+        </div>
+      </CardHeader>
+      {project.fundings && (
+        <CardContent className="p-4 pt-0">
+          <div className="flex items-center gap-1 text-sm text-gray-500">
+            <Banknote className="h-4 w-4" />
+            Fundings: {project.fundings} USD
+          </div>
+        </CardContent>
+      )}
+      <CardFooter className="p-4">
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate(`/projects/${project.id}`)}>
+            Details
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/offers?projectId=${project.id}`)}>
+            Market Offers: {projectOffers.length}
+          </Button>
+          <Button variant="outline" disabled size="sm">Project Tasks</Button>
+        </div>
+      </CardFooter>
+    </Card>
+  );
+};
 
 const StatCard = ({ title, value, icon: Icon, progress }: {
   title: string;
@@ -107,9 +162,27 @@ const AravtDashboard = () => {
   const { aravtDetails, isLoading: aravtLoading } = useAravtsStore();
   const user = useAuthStore(state => state.user);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [isInviting, setIsInviting] = useState(false);
   const params = useParams();
   const navigate = useNavigate();
   const { currentAravtId, setCurrentAravtId, currentAravt } = useSelectedAravt();
+  const {
+    members,
+    pendingRequests,
+    isLoading: membersLoading,
+    error: membersError,
+    removeMember,
+    fetchAravtData,
+    fetchAravtApplications,
+    approveRequest,
+    rejectRequest,
+    inviteMember,
+  } = useAdminStore();
+
+  const { projects, isLoading: projectsLoading, fetchProjectsForAravt } = useProjectsStore();
+  const { fetchOffers } = useOffersStore();
 
   const urlAravtId = useMemo((): number | undefined => {
     if (!params.aravtId) return undefined;
@@ -125,6 +198,28 @@ const AravtDashboard = () => {
     return user.aravts.some(link => link.able_to_create_aravt);
   }, [user?.aravts, currentAravtId]);
 
+  const isLeader = useMemo(() => isUserLeaderOfAravt(user, currentAravtId), [user, currentAravtId]);
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error('Please enter an email address');
+      return;
+    }
+    setIsInviting(true);
+    try {
+      if (!currentAravtId) return;
+      await inviteMember(email, currentAravtId);
+      setEmail('');
+      setDialogOpen(false);
+      toast.info('Please send the invitation email in your email client');
+    } catch (error) {
+      console.error('Error inviting member', error);
+    } finally {
+      setIsInviting(false);
+    }
+  };
+
   useEffect(() => {
     fetchDashboardData();
     if (urlAravtId && urlAravtId !== currentAravtId) {
@@ -134,11 +229,25 @@ const AravtDashboard = () => {
     }
   }, [fetchDashboardData, urlAravtId, currentAravtId, setCurrentAravtId, navigate, user?.aravts]);
 
+  useEffect(() => {
+    if (currentAravtId) {
+      fetchAravtData(currentAravtId);
+      if (isLeader) {
+        fetchAravtApplications(currentAravtId);
+      }
+    }
+  }, [currentAravtId, isLeader, fetchAravtData, fetchAravtApplications]);
+
+  useEffect(() => {
+    if (currentAravtId) {
+      fetchProjectsForAravt(currentAravtId);
+      fetchOffers();
+    }
+  }, [currentAravtId, fetchProjectsForAravt, fetchOffers]);
+
   if (dashboardLoading || aravtLoading) {
     return <LoadingSpinner />;
   }
-
-  const businessProjects = aravtDetails?.business ?? [];
 
   return (
     <div className="mx-auto py-4 px-3 space-y-4">
@@ -186,27 +295,119 @@ const AravtDashboard = () => {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Team Members</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm">Team Members</CardTitle>
+            {isLeader && (
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Invite
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Invite New Member</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleInvite} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email address to send invite:</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="Enter email address"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        disabled={isInviting}
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={isInviting}>
+                      {isInviting ? (
+                        <div className="mr-2 flex items-center gap-2">
+                          <LoadingSpinner />
+                          Sending Invitation...
+                        </div>
+                      ) : (
+                        'Send Invitation'
+                      )}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 gap-2">
-            {aravtDetails?.team?.map((member: UserShort) => (
-              <div key={member.id} className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
-                  {member.avatar_url && (
-                    <AvatarImage src={member.avatar_url} alt={member.username} />
-                  )}
-                  <AvatarFallback className="text-xs">{getInitials(member.full_name || member.username)}</AvatarFallback>
-                </Avatar>
-                <div className="text-left">
-                  <p className="text-sm font-medium">{member.username}</p>
-                  <p className="text-xs text-muted-foreground">User #{member.id}</p>
+        <CardContent className="space-y-4">
+          {membersError && (
+            <Alert variant="destructive">
+              <AlertDescription>{membersError}</AlertDescription>
+            </Alert>
+          )}
+          {membersLoading ? (
+            <div className="py-8 flex justify-center"><LoadingSpinner /></div>
+          ) : (
+            <>
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input placeholder="Search members..." className="pl-9" />
+                </div>
+                <div className="flex gap-2">
+                  <Select defaultValue="all">
+                    <SelectTrigger className="w-[130px]">
+                      <SelectValue placeholder="Role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Roles</SelectItem>
+                      <SelectItem value="AravtLeader">Aravt Leader</SelectItem>
+                      <SelectItem value="User">User</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-            ))}
-          </div>
+              <div className="space-y-4">
+                {members.map((member) => (
+                  <MemberCard
+                    key={member.id}
+                    canManage={isLeader}
+                    aravtId={currentAravtId!}
+                    member={member}
+                    onRemoveMember={(userId) => currentAravtId ? removeMember(userId, currentAravtId) : Promise.resolve()}
+                    isLoading={membersLoading}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
+
+      {isLeader && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Requests to Join your Aravt:</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {membersLoading ? (
+              <div className="py-8 flex justify-center"><LoadingSpinner /></div>
+            ) : (
+              pendingRequests.length === 0 ? (
+                <div className="py-8 text-center text-muted-foreground">No new join requests at the moment.</div>
+              ) : (
+                pendingRequests.map((application) => (
+                  <RequestCard
+                    key={application.id}
+                    request={application}
+                    onApprove={approveRequest}
+                    onReject={rejectRequest}
+                    isLoading={membersLoading}
+                  />
+                ))
+              )
+            )}
+          </CardContent>
+        </Card>
+      )}
       
 
       <Card>
@@ -237,26 +438,21 @@ const AravtDashboard = () => {
             <CardTitle>Business</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            
-
-            {businessProjects.length > 0 && (
-              <div>
+            <div>
+              <div className="flex justify-between items-center mb-2">
                 <h4 className="text font-bold text-gray-500">Projects</h4>
-                <div className="grid gap-2 mt-2">
-                  {businessProjects.map((project: Project) => (
-                    <Card key={project.id} className="p-4">
-                      <div className="">
-                        <div>
-                          <h5 className="font-medium">• {project.name}</h5>
-                          <p className="text-sm pb-1 text-gray-500">{project.description}</p>
-                        </div>
-                        <Badge>{"Active"}</Badge>
-                      </div>
-                    </Card>
+                {isLeader && <CreateProjectDialog aravt_id={currentAravtId!} />}
+              </div>
+              {projectsLoading ? (
+                <div className="py-4 flex justify-center"><LoadingSpinner /></div>
+              ) : (
+                <div className="grid gap-2">
+                  {projects.map((project: Project) => (
+                    <ProjectCard key={project.id} project={project} />
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {aravtDetails.offers?.length > 0 && (
               <div>

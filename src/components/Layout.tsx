@@ -47,7 +47,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen w-full flex flex-col">
       {isNeedHeader && (
-        <header className="bg-white shadow w-full h-28 navbar sm:h-16">
+        <header className="bg-white shadow w-full h-14 navbar sm:h-16">
           <nav className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center">
@@ -56,28 +56,14 @@ export default function Layout() {
                     (hasAravt ? (
                       <div className="">
                         <NavLink to="/browse">🌀 Aravts</NavLink>
-                        <NavLink to={`/dashboard/${effectiveAravtId}`}>
-                          🎛️ Dashboard
-                        </NavLink>
-                        <NavLink to={`/members/${effectiveAravtId}`}>
-                          👫 Members
-                        </NavLink>
-                        <NavLink to="/projects">🧑‍💻 Projects</NavLink>
                         <NavLink to="/tasks">📝 Tasks</NavLink>
-                        <NavLink to="/offers">🪙 Market</NavLink>
-                        <NavLink to="/wallet">👛 Wallet</NavLink>
                         <NavLink to="/Learn">📚 Learn</NavLink>
                         {isAdmin && <NavLink to="/admin">Admin</NavLink>}
-                        <NavLink to="/feed">📰 Feed</NavLink>
-                        <NavLink to="/profile">👤 Profile</NavLink>
                       </div>
                     ) : (
                       <div className="flex sm:flex-row">
                         <NavLink to="/browse">🌀 Aravts</NavLink>
-                        <NavLink to="/offers">🪙 Market</NavLink>
-                        <NavLink to="/wallet">👛 Wallet</NavLink>
                         <NavLink to="/Learn">📚 Learn</NavLink>
-                        <NavLink to="/profile">👤 Profile</NavLink>
                       </div>
                     ))}
                 </div>
@@ -93,21 +79,31 @@ export default function Layout() {
         </div>
       </main>
 
-      <footer className="bg-white shadow mt-auto h-[60px] flex items-center">
-        <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-gray-500 text-sm">
-            © 2026 Aravt Systems. All rights reserved.
-            <br></br>
-            <a
-              href="https://docs.google.com/document/d/15ZrMssFJ4-qx8f6sZs1qY1BpR1Oh0UDSG0O1M3pR0GQ/edit?tab=t.0#heading=h.ozs7eg87x5l7"
-              target="_blank"
-              rel="noopener noreferrer"
+      {isNeedHeader && hasAravt && (
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 h-24">
+          <div className="h-full flex items-center justify-center gap-4 px-4 max-w-7xl mx-auto w-full">
+            {/* Feed */}
+            <NavLink to="/feed">📰 Feed</NavLink>
+
+            {/* Wallet */}
+            <NavLink to="/wallet">👛 Wallet</NavLink>
+
+            {/* Dashboard - Main big button */}
+            <Link
+              to={`/dashboard/${effectiveAravtId}`}
+              className="flex flex-col items-center justify-center w-16 h-16 text-white rounded-full font-bold text-3xl"
             >
-              Whitepaper
-            </a>
-          </p>
-        </div>
-      </footer>
+              🌀
+            </Link>
+
+            {/* Market */}
+            <NavLink to="/offers">🪙 Market</NavLink>
+
+            {/* Profile */}
+            <NavLink to="/profile">👤 Profile</NavLink>
+          </div>
+        </nav>
+      )}
     </div>
   );
 }
