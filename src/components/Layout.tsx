@@ -56,7 +56,7 @@ export default function Layout() {
                     (hasAravt ? (
                       <div className="">
                         <NavLink to="/browse">🌀 Aravts (6)</NavLink>
-                        <NavLink to="/Learn">📚 Univrsity</NavLink>
+                        <NavLink to="/Learn">📚 Learn</NavLink>
                         {isAdmin && <NavLink to="/admin">Admin</NavLink>}
                       </div>
                     ) : (

@@ -275,6 +275,118 @@ const AravtDashboard = () => {
 
       <Card>
         <CardHeader className="pb-2">
+          <CardTitle className="text-sm">About</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-sm text-muted-foreground">{aravtDetails?.description}</p>
+          {/*
+            TODO: вернуть навыки, когда API снова начнет возвращать skills
+            <div className="flex flex-wrap gap-1">
+              {aravtDetails?.skills?.map((skill: string, i: number) => (
+                <Badge key={i} variant="outline" className="text-xs">{skill}</Badge>
+              ))}
+            </div>
+          */}
+        </CardContent>
+      </Card>
+
+      
+
+     {aravtDetails && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Business</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="text font-bold text-gray-500">Projects</h4>
+                {isLeader && <CreateProjectDialog aravt_id={currentAravtId!} />}
+              </div>
+              {projectsLoading ? (
+                <div className="py-4 flex justify-center"><LoadingSpinner /></div>
+              ) : (
+                <div className="grid gap-2">
+                  {projects.map((project: Project) => (
+                    <ProjectCard key={project.id} project={project} />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {aravtDetails.offers?.length > 0 && (
+              <div>
+                <h4 className="pt-2 text-sm font-medium text-gray-500">Our Offers</h4>
+                <div className="grid gap-2 mt-2">
+                  {aravtDetails.offers.map((offer: AravtOffer) => (
+                    <Card key={offer.id} className="p-4">
+                      <div className="">
+                        <div>
+                          <h5 className="font-medium">{offer.name}</h5>
+                          <p className="text-sm text-gray-500">{offer.description}</p>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-bold pt-2">{"$" + offer.price}</div>
+                          {offer.is_limited && (
+                            <div className="text-sm text-gray-500">
+                              {offer.count_left} remaining
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {aravtDetails.telegram_chat_link && (
+              <div>
+                <h4 className="text-sm pt-2 font-medium text-gray-500">Telegram Chat</h4>
+                <a 
+                  href={aravtDetails.telegram_chat_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:underline"
+                >
+                  Open Telegram Chat
+                </a>
+              </div>
+            )}
+
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Revenue</CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-1">
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <p className="text-sm text-muted-foreground">Earned</p>
+              <p className="text-lg font-semibold">${stats.tokensEarned}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Rating</p>
+              <p className="text-lg font-semibold">Rank {stats.rank}</p>
+              <Progress value={stats.rankProgress} className="h-1 mt-1" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Tasks</p>
+              <p className="text-lg font-semibold">{stats.tasksCompleted}/{stats.totalTasks}</p>
+              <Progress value={(stats.tasksCompleted / stats.totalTasks) * 100} className="h-1 mt-1" />
+            </div>
+            
+            
+          </div>
+        </CardContent>
+      </Card>
+
+
+      <Card>
+        <CardHeader className="pb-2">
           <CardTitle className="text-sm">Leadership</CardTitle>
         </CardHeader>
         <CardContent>
@@ -381,33 +493,6 @@ const AravtDashboard = () => {
           )}
         </CardContent>
       </Card>
-
-      {isLeader && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Requests to Join your Aravt:</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {membersLoading ? (
-              <div className="py-8 flex justify-center"><LoadingSpinner /></div>
-            ) : (
-              pendingRequests.length === 0 ? (
-                <div className="py-8 text-center text-muted-foreground">No new join requests at the moment.</div>
-              ) : (
-                pendingRequests.map((application) => (
-                  <RequestCard
-                    key={application.id}
-                    request={application}
-                    onApprove={approveRequest}
-                    onReject={rejectRequest}
-                    isLoading={membersLoading}
-                  />
-                ))
-              )
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       <Card>
         <CardHeader>
@@ -606,114 +691,36 @@ const AravtDashboard = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">About</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-sm text-muted-foreground">{aravtDetails?.description}</p>
-          {/*
-            TODO: вернуть навыки, когда API снова начнет возвращать skills
-            <div className="flex flex-wrap gap-1">
-              {aravtDetails?.skills?.map((skill: string, i: number) => (
-                <Badge key={i} variant="outline" className="text-xs">{skill}</Badge>
-              ))}
-            </div>
-          */}
-        </CardContent>
-      </Card>
+      
 
-      {aravtDetails && (
+     
+
+        {isLeader && (
         <Card>
           <CardHeader>
-            <CardTitle>Business</CardTitle>
+            <CardTitle>Requests to Join your Aravt:</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="text font-bold text-gray-500">Projects</h4>
-                {isLeader && <CreateProjectDialog aravt_id={currentAravtId!} />}
-              </div>
-              {projectsLoading ? (
-                <div className="py-4 flex justify-center"><LoadingSpinner /></div>
+            {membersLoading ? (
+              <div className="py-8 flex justify-center"><LoadingSpinner /></div>
+            ) : (
+              pendingRequests.length === 0 ? (
+                <div className="py-8 text-center text-muted-foreground">No new join requests at the moment.</div>
               ) : (
-                <div className="grid gap-2">
-                  {projects.map((project: Project) => (
-                    <ProjectCard key={project.id} project={project} />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {aravtDetails.offers?.length > 0 && (
-              <div>
-                <h4 className="pt-2 text-sm font-medium text-gray-500">Our Offers</h4>
-                <div className="grid gap-2 mt-2">
-                  {aravtDetails.offers.map((offer: AravtOffer) => (
-                    <Card key={offer.id} className="p-4">
-                      <div className="">
-                        <div>
-                          <h5 className="font-medium">{offer.name}</h5>
-                          <p className="text-sm text-gray-500">{offer.description}</p>
-                        </div>
-                        <div className="text-center">
-                          <div className="font-bold pt-2">{"$" + offer.price}</div>
-                          {offer.is_limited && (
-                            <div className="text-sm text-gray-500">
-                              {offer.count_left} remaining
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </div>
+                pendingRequests.map((application) => (
+                  <RequestCard
+                    key={application.id}
+                    request={application}
+                    onApprove={approveRequest}
+                    onReject={rejectRequest}
+                    isLoading={membersLoading}
+                  />
+                ))
+              )
             )}
-
-            {aravtDetails.telegram_chat_link && (
-              <div>
-                <h4 className="text-sm pt-2 font-medium text-gray-500">Telegram Chat</h4>
-                <a 
-                  href={aravtDetails.telegram_chat_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:underline"
-                >
-                  Open Telegram Chat
-                </a>
-              </div>
-            )}
-
           </CardContent>
         </Card>
       )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-1">
-          <div className="grid grid-cols-3 gap-2">
-            <div>
-              <p className="text-sm text-muted-foreground">Earned</p>
-              <p className="text-lg font-semibold">${stats.tokensEarned}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Rating</p>
-              <p className="text-lg font-semibold">Rank {stats.rank}</p>
-              <Progress value={stats.rankProgress} className="h-1 mt-1" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Tasks</p>
-              <p className="text-lg font-semibold">{stats.tasksCompleted}/{stats.totalTasks}</p>
-              <Progress value={(stats.tasksCompleted / stats.totalTasks) * 100} className="h-1 mt-1" />
-            </div>
-            
-            
-          </div>
-        </CardContent>
-      </Card>
 
       
 

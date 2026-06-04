@@ -264,56 +264,11 @@ const Wallet = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-b hover:bg-gray-50">
-                  <td className="py-2">2026/01/15</td>
-                  <td className="py-2">1,250 USD</td>
-                  <td className="py-2">Project EnTez upfront</td>
-                  <td className="py-2">
-                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
-                      Received
-                    </span>
-                  </td>
-                </tr>
-                <tr className="border-b hover:bg-gray-50">
-                  <td className="py-2">2026/01/10</td>
-                  <td className="py-2">500 ARAVT</td>
-                  <td className="py-2">App testing</td>
-                  <td className="py-2">
-                    <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
-                      Waiting
-                    </span>
-                  </td>
-                </tr>
-                <tr className="border-b hover:bg-gray-50">
-                  <td className="py-2">2026/01/05</td>
-                  <td className="py-2">2,000 ARAVT</td>
-                  <td className="py-2">Smart Contract Audit</td>
-                  <td className="py-2">
-                    <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
-                      Waiting
-                    </span>
-                  </td>
-                </tr>
-                <tr className="hover:bg-gray-50">
-                  <td className="py-2">2026/01/01</td>
-                  <td className="py-2">750 ARAVT</td>
-                  <td className="py-2">NFT Development</td>
-                  <td className="py-2">
-                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
-                      Received
-                    </span>
-                  </td>
-                </tr>
-                <tr className="hover:bg-gray-50">
-                  <td className="py-2">2026/01/01</td>
-                  <td className="py-2">300 USD</td>
-                  <td className="py-2">Project EnTez Payment</td>
-                  <td className="py-2">
-                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
-                      Received
-                    </span>
-                  </td>
-                </tr>
+                
+                
+                
+                
+                
               </tbody>
             </table>
           </div>
