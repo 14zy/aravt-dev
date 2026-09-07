@@ -59,13 +59,13 @@ const BrowseAravts = () => {
         <div className="relative">
           <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           <Input 
-          placeholder="Search Aravts..." 
-          className="w-48 pl-9 h-10 bg-white"
+          placeholder="Search..." 
+          className="w-4/5 pl-9 h-10 bg-white"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="flex border rounded-md overflow-hidden">
+        <div className="flex border rounded-md ">
           <Button 
           variant={viewMode === 'list' ? 'default' : 'outline'} 
           size="sm"

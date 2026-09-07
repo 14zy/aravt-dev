@@ -82,10 +82,11 @@ export default function Layout() {
         <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 h-24">
           <div className="h-full flex items-center justify-center gap-4 px-4 max-w-7xl mx-auto w-full">
             {/* Feed */}
-            <NavLink to="/feed">📰 Feed</NavLink>
+            <NavLink to="/feed">🧭 News</NavLink>
 
-            {/* Wallet */}
-            <NavLink to="/wallet">👛 Wallet</NavLink>
+            {/* Market */}
+            <NavLink to="/offers">🪙 Store</NavLink>
+
 
             {/* Dashboard - Main big button */}
             <Link
@@ -95,11 +96,13 @@ export default function Layout() {
               🌀
             </Link>
 
-            {/* Market */}
-            <NavLink to="/offers">🪙 Market</NavLink>
 
+            {/* Wallet */}
+            <NavLink to="/wallet">👛 Wallet</NavLink>
+
+            
             {/* Profile */}
-            <NavLink to="/profile">👤 Profile</NavLink>
+            <NavLink to="/profile">👤 Me</NavLink>
           </div>
         </nav>
       )}
