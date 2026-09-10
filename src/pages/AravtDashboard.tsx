@@ -28,7 +28,24 @@ import { useTasksStore } from '@/store/tasks';
 import { useAuthStore } from '@/store/auth';
 import { useDashboardStore } from '@/store/dashboard';
 import type { AravtOffer, Project, Task } from '@/types';
-import { Bell, Banknote, Globe, Home, Plus, Search } from 'lucide-react';
+import {
+  ArrowUpRight,
+  Banknote,
+  Bell,
+  BriefcaseBusiness,
+  CheckCircle2,
+  CircleDollarSign,
+  Clock3,
+  Crown,
+  Globe,
+  Home,
+  ListTodo,
+  Plus,
+  Search,
+  Sparkles,
+  Target,
+  Users,
+} from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -39,40 +56,40 @@ const ProjectCard = ({ project }: { project: Project }) => {
   const projectOffers = offers.filter(offer => offer.business.id === project.id);
 
   return (
-    <Card>
-      <CardHeader className="p-4">
+    <Card className="group overflow-hidden border-slate-200 shadow-none transition-all hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-md">
+      <CardHeader className="p-5">
         <div className="flex justify-between items-start">
           <div className="flex items-center">
             {project.logo && (
-              <img src={project.logo} alt={`${project.name} logo`} className="h-8 w-8 mr-2" />
+              <img src={project.logo} alt={`${project.name} logo`} className="mr-3 h-10 w-10 rounded-xl object-cover ring-1 ring-slate-200" />
             )}
             <div>
-              <CardTitle className="text-lg text-left">{project.name}</CardTitle>
-              <CardDescription>{project.description}</CardDescription>
+              <CardTitle className="text-left text-base">{project.name}</CardTitle>
+              <CardDescription className="mt-1 line-clamp-2">{project.description}</CardDescription>
             </div>
           </div>
-          <Badge variant={project.status === 'BusinessStatus.Posted' ? 'default' : 'secondary'}>
+          <Badge className="rounded-full" variant={project.status === 'BusinessStatus.Posted' ? 'default' : 'secondary'}>
             Active
           </Badge>
         </div>
       </CardHeader>
       {project.fundings && (
-        <CardContent className="p-4 pt-0">
+        <CardContent className="px-5 pb-0 pt-0">
           <div className="flex items-center gap-1 text-sm text-gray-500">
             <Banknote className="h-4 w-4" />
             Fundings: {project.fundings} USD
           </div>
         </CardContent>
       )}
-      <CardFooter className="p-4">
-        <div className="flex gap-2">
+      <CardFooter className="flex-wrap gap-2 p-5 pt-4">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={() => navigate(`/projects/${project.id}`)}>
             Details
           </Button>
           <Button variant="outline" size="sm" onClick={() => navigate(`/offers?projectId=${project.id}`)}>
             Market Offers: {projectOffers.length}
           </Button>
-          <Button variant="outline" disabled size="sm">Project Tasks</Button>
+          <Button variant="ghost" disabled size="sm">Project Tasks</Button>
         </div>
       </CardFooter>
     </Card>
@@ -89,6 +106,8 @@ const AravtDashboard = () => {
   const [isInviting, setIsInviting] = useState(false);
   const [showCreateTaskForm, setShowCreateTaskForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
+  const [memberRoleFilter, setMemberRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [businesses, setBusinesses] = useState<Project[]>([]);
@@ -181,6 +200,18 @@ const AravtDashboard = () => {
   const filteredLocalTasks = useMemo(() => filterTasks(localTasks), [localTasks, filterTasks]);
   const filteredGlobalTasks = useMemo(() => filterTasks(globalTasks), [globalTasks, filterTasks]);
 
+  const filteredMembers = useMemo(() => {
+    const query = memberSearchQuery.trim().toLowerCase();
+    return members.filter((member) => {
+      const matchesSearch = !query || [member.username, member.full_name, member.city]
+        .some((value) => value?.toLowerCase().includes(query));
+      const matchesRole = memberRoleFilter === 'all' ||
+        (memberRoleFilter === 'leader' && member.is_leader_of_aravt) ||
+        (memberRoleFilter === 'member' && !member.is_leader_of_aravt);
+      return matchesSearch && matchesRole;
+    });
+  }, [members, memberRoleFilter, memberSearchQuery]);
+
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
@@ -249,23 +280,52 @@ const AravtDashboard = () => {
   }
 
   return (
-    <div className="py-4">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">{(currentAravt?.name) ?? aravtDetails?.name} (#{(currentAravt?.id) ?? aravtDetails?.id})</h1>
-          <p className="text-gray-500"><b>{user?.username}</b> dashboard</p>
+    <div className="relative space-y-6 overflow-hidden px-0 py-0">
+      <div className="pointer-events-none absolute -right-32 -top-32 -z-10 h-80 w-80 rounded-full bg-violet-100/70 blur-3xl" />
+      <div className="pointer-events-none absolute left-1/4 top-96 -z-10 h-72 w-72 rounded-full bg-emerald-50 blur-3xl" />
+      <header className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-bl from-violet-100/80 via-transparent to-transparent" />
+        <div className="relative flex flex-col justify-between gap-6 sm:flex-row sm:items-start">
+          <div className="max-w-2xl">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <Badge variant="secondary" className="rounded-full px-3 py-1 text-xs font-medium">
+                <Sparkles className="mr-1.5 h-3.5 w-3.5 text-violet-600" />
+                Aravt #{currentAravt?.id ?? aravtDetails?.id}
+              </Badge>
+              {isLeader && <Badge className="rounded-full">Leader view</Badge>}
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+              {currentAravt?.name ?? aravtDetails?.name}
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
+              {aravtDetails?.description || `Welcome back, ${user?.username}. Keep your team moving forward.`}
+            </p>
+          </div>
+          {/* <div className="relative self-start">
+            <Button variant="outline" size="sm" className="h-10 w-10 rounded-full p-0" aria-label="Notifications">
+              <Bell className="h-4 w-4" />
+            </Button>
+            {isLeader && pendingRequests.length > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">
+                {pendingRequests.length}
+              </span>
+            )}
+          </div> */}
         </div>
-        <div className="relative">
-          <Button variant="outline" size="sm">
-            <Bell className="h-4 w-4" />
-          </Button>
-          {isLeader && pendingRequests.length > 0 && (
-            <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-              {pendingRequests.length}
-            </span>
-          )}
+        <div className="relative mt-7 grid grid-cols-3 gap-2 border-t border-slate-100 pt-5 sm:max-w-xl sm:gap-4">
+          {[
+            { label: 'Tasks', value: localTasks.length + globalTasks.length, icon: ListTodo },
+            { label: 'Team', value: members.length, icon: Users },
+            { label: 'Earned', value: `$${stats.tokensEarned}`, icon: CircleDollarSign },
+          ].map(({ label, value, icon: Icon }) => (
+            <div key={label} className="rounded-2xl bg-slate-50 px-3 py-3 sm:px-4">
+              <Icon className="mb-2 h-4 w-4 text-violet-600" />
+              <p className="truncate text-lg font-bold text-slate-950">{value}</p>
+              <p className="text-xs text-slate-500">{label}</p>
+            </div>
+          ))}
         </div>
-      </div>
+      </header>
 
       {dashboardError && (
         <Alert variant="destructive">
@@ -273,236 +333,26 @@ const AravtDashboard = () => {
         </Alert>
       )}
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">About</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-sm text-muted-foreground">{aravtDetails?.description}</p>
-          {/*
-            TODO: вернуть навыки, когда API снова начнет возвращать skills
-            <div className="flex flex-wrap gap-1">
-              {aravtDetails?.skills?.map((skill: string, i: number) => (
-                <Badge key={i} variant="outline" className="text-xs">{skill}</Badge>
-              ))}
-            </div>
-          */}
-        </CardContent>
-      </Card>
-
-      
-
-     {aravtDetails && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Business</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      <section aria-labelledby="tasks-heading" className="space-y-4">
+        <div className="flex items-end justify-between gap-4">
+          <div className="flex items-center gap-3">
+            {/* <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 text-sm font-bold text-white shadow-sm">1</span> */}
             <div>
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="text font-bold text-gray-500">Projects</h4>
-                {isLeader && <CreateProjectDialog aravt_id={currentAravtId!} />}
-              </div>
-              {projectsLoading ? (
-                <div className="py-4 flex justify-center"><LoadingSpinner /></div>
-              ) : (
-                <div className="grid gap-2">
-                  {projects.map((project: Project) => (
-                    <ProjectCard key={project.id} project={project} />
-                  ))}
-                </div>
-              )}
+              <h2 id="tasks-heading" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">Aravt Tasks</h2>
+              {/* <p className="text-sm text-slate-500">Find work, track progress, and move ideas forward.</p> */}
             </div>
+          </div>
+          <Button className="rounded-xl" size="sm" onClick={() => setShowCreateTaskForm(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Create task</span>
+            <span className="sm:hidden">Create</span>
+          </Button>
+        </div>
 
-            {aravtDetails.offers?.length > 0 && (
-              <div>
-                <h4 className="pt-2 text-sm font-medium text-gray-500">Our Offers</h4>
-                <div className="grid gap-2 mt-2">
-                  {aravtDetails.offers.map((offer: AravtOffer) => (
-                    <Card key={offer.id} className="p-4">
-                      <div className="">
-                        <div>
-                          <h5 className="font-medium">{offer.name}</h5>
-                          <p className="text-sm text-gray-500">{offer.description}</p>
-                        </div>
-                        <div className="text-center">
-                          <div className="font-bold pt-2">{"$" + offer.price}</div>
-                          {offer.is_limited && (
-                            <div className="text-sm text-gray-500">
-                              {offer.count_left} remaining
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {aravtDetails.telegram_chat_link && (
-              <div>
-                <h4 className="text-sm pt-2 font-medium text-gray-500">Telegram Chat</h4>
-                <a 
-                  href={aravtDetails.telegram_chat_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:underline"
-                >
-                  Open Telegram Chat
-                </a>
-              </div>
-            )}
-
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
+        <Card className="overflow-hidden rounded-2xl border-slate-200 shadow-sm">
         <CardHeader>
-          <CardTitle>Revenue</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-1">
-          <div className="grid grid-cols-3 gap-2">
-            <div>
-              <p className="text-sm text-muted-foreground">Earned</p>
-              <p className="text-lg font-semibold">${stats.tokensEarned}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Rating</p>
-              <p className="text-lg font-semibold">Rank {stats.rank}</p>
-              <Progress value={stats.rankProgress} className="h-1 mt-1" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Tasks</p>
-              <p className="text-lg font-semibold">{stats.tasksCompleted}/{stats.totalTasks}</p>
-              <Progress value={(stats.tasksCompleted / stats.totalTasks) * 100} className="h-1 mt-1" />
-            </div>
-            
-            
-          </div>
-        </CardContent>
-      </Card>
-
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Leadership</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              {aravtDetails?.leader?.avatar_url && (
-                <AvatarImage src={aravtDetails.leader.avatar_url} alt={aravtDetails.leader.username} />
-              )}
-              <AvatarFallback className="text-xs">{getInitials(aravtDetails?.leader?.full_name || aravtDetails?.leader?.username)}</AvatarFallback>
-            </Avatar>
-            <div className="text-left">
-              <p className="text-sm font-medium">{aravtDetails?.leader?.username ?? '—'}</p>
-              <p className="text-xs text-muted-foreground">Aravt Leader</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm">Team Members</CardTitle>
-            {isLeader && (
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Invite
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Invite New Member</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleInvite} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email address to send invite:</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="Enter email address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        disabled={isInviting}
-                      />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isInviting}>
-                      {isInviting ? (
-                        <div className="mr-2 flex items-center gap-2">
-                          <LoadingSpinner />
-                          Sending Invitation...
-                        </div>
-                      ) : (
-                        'Send Invitation'
-                      )}
-                    </Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {membersError && (
-            <Alert variant="destructive">
-              <AlertDescription>{membersError}</AlertDescription>
-            </Alert>
-          )}
-          {membersLoading ? (
-            <div className="py-8 flex justify-center"><LoadingSpinner /></div>
-          ) : (
-            <>
-              <div className="flex flex-col md:flex-row md:items-center gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input placeholder="Search members..." className="pl-9" />
-                </div>
-                <div className="flex gap-2">
-                  <Select defaultValue="all">
-                    <SelectTrigger className="w-[130px]">
-                      <SelectValue placeholder="Role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Roles</SelectItem>
-                      <SelectItem value="AravtLeader">Aravt Leader</SelectItem>
-                      <SelectItem value="User">User</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-4">
-                {members.map((member) => (
-                  <MemberCard
-                    key={member.id}
-                    canManage={isLeader}
-                    aravtId={currentAravtId!}
-                    member={member}
-                    onRemoveMember={(userId) => currentAravtId ? removeMember(userId, currentAravtId) : Promise.resolve()}
-                    isLoading={membersLoading}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Tasks</CardTitle>
-            <Button size="sm" onClick={() => setShowCreateTaskForm(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Task
-            </Button>
-          </div>
+          <CardTitle className="text-base">Task board</CardTitle>
+          <CardDescription>Browse local opportunities or tasks shared across the network.</CardDescription>
         </CardHeader>
         <CardContent>
           {tasksError && (
@@ -512,7 +362,7 @@ const AravtDashboard = () => {
           )}
           {showCreateTaskForm && (
             <Dialog open={showCreateTaskForm} onOpenChange={setShowCreateTaskForm}>
-              <DialogContent className="max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>Create New Task</DialogTitle>
                 </DialogHeader>
@@ -605,7 +455,7 @@ const AravtDashboard = () => {
                   </div>
                   <DialogFooter className="mt-6">
                     <Button type="button" variant="outline" onClick={() => setShowCreateTaskForm(false)}>Cancel</Button>
-                    <Button type="submit">Create Task</Button>
+                    <Button type="submit">Create task</Button>
                   </DialogFooter>
                 </form>
               </DialogContent>
@@ -615,7 +465,7 @@ const AravtDashboard = () => {
             <div className="py-8 flex justify-center"><LoadingSpinner /></div>
           ) : (
             <Tabs defaultValue="local">
-              <TabsList>
+              <TabsList className="grid w-full grid-cols-2 rounded-xl sm:w-auto">
                 <TabsTrigger value="local" className="flex items-center gap-2">
                   <Home className="h-4 w-4 text-green-500" />
                   Local ({filteredLocalTasks.length})
@@ -625,14 +475,14 @@ const AravtDashboard = () => {
                   Global ({filteredGlobalTasks.length})
                 </TabsTrigger>
               </TabsList>
-              <div className="mt-4 flex flex-col md:flex-row md:items-center gap-4">
+              <div className="mt-5 flex flex-col gap-3 rounded-2xl bg-slate-50 p-3 md:flex-row md:items-center">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input placeholder="Search tasks..." className="pl-9" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                 </div>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:flex">
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[130px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                    <SelectTrigger className="w-full bg-white sm:w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Status</SelectItem>
                       <SelectItem value="open">Open</SelectItem>
@@ -640,7 +490,7 @@ const AravtDashboard = () => {
                     </SelectContent>
                   </Select>
                   <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                    <SelectTrigger className="w-[130px]"><SelectValue placeholder="Priority" /></SelectTrigger>
+                    <SelectTrigger className="w-full bg-white sm:w-[140px]"><SelectValue placeholder="Priority" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Priority</SelectItem>
                       <SelectItem value="high">High</SelectItem>
@@ -651,7 +501,7 @@ const AravtDashboard = () => {
                 </div>
               </div>
               <TabsContent value="local" className="mt-4">
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                   {filteredLocalTasks.map((task) => (
                     <TaskCard
                       key={task.id}
@@ -664,12 +514,12 @@ const AravtDashboard = () => {
                     />
                   ))}
                   {filteredLocalTasks.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">No local tasks found</div>
+                    <div className="col-span-full rounded-xl border border-dashed py-12 text-center text-sm text-slate-500">No local tasks found.</div>
                   )}
                 </div>
               </TabsContent>
               <TabsContent value="global" className="mt-4">
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                   {filteredGlobalTasks.map((task) => (
                     <TaskCard
                       key={task.id}
@@ -682,7 +532,7 @@ const AravtDashboard = () => {
                     />
                   ))}
                   {filteredGlobalTasks.length === 0 && (
-                    <div className="text-center py-8 text-gray-500">No global tasks found</div>
+                    <div className="col-span-full rounded-xl border border-dashed py-12 text-center text-sm text-slate-500">No global tasks found.</div>
                   )}
                 </div>
               </TabsContent>
@@ -690,47 +540,199 @@ const AravtDashboard = () => {
           )}
         </CardContent>
       </Card>
+      </section>
 
-      
+      <section aria-labelledby="team-heading" className="space-y-4">
+        <div className="flex items-end justify-between gap-4">
+          <div className="flex items-center gap-3">
+            {/* <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500 text-sm font-bold text-white shadow-sm">2</span> */}
+            <div>
+              <h2 id="team-heading" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">Our Team</h2>
+              {/* <p className="text-sm text-slate-500">The people building this Aravt together.</p> */}
+            </div>
+          </div>
+          {isLeader && (
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="rounded-xl">
+                  <Plus className="mr-2 h-4 w-4" /> Invite
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Invite a new member</DialogTitle></DialogHeader>
+                <form onSubmit={handleInvite} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email address</Label>
+                    <Input id="email" type="email" placeholder="name@example.com" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isInviting} />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isInviting}>
+                    {isInviting ? <span className="flex items-center gap-2"><LoadingSpinner /> Sending invitation...</span> : 'Send invitation'}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
 
-     
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+
+          <div className="space-y-4">
+            <Card className="rounded-2xl border-slate-200 bg-slate-950 text-white shadow-sm">
+              <CardContent className="p-5">
+                <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-white/10"><Crown className="h-5 w-5 text-amber-300" /></div>
+                <p className="text-xs font-medium uppercase tracking-widest text-slate-400">Aravt leader</p>
+                <div className="mt-3 flex items-center gap-3">
+                  <Avatar className="h-11 w-11 ring-2 ring-white/10">
+                    {aravtDetails?.leader?.avatar_url && <AvatarImage src={aravtDetails.leader.avatar_url} alt={aravtDetails.leader.username} />}
+                    <AvatarFallback className="bg-violet-500 text-sm text-white">{getInitials(aravtDetails?.leader?.full_name || aravtDetails?.leader?.username)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold">{aravtDetails?.leader?.full_name || aravtDetails?.leader?.username || 'Unassigned'}</p>
+                    <p className="truncate text-xs text-slate-400">@{aravtDetails?.leader?.username ?? '—'}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+          </div>
+          
+          <Card className="rounded-2xl border-slate-200 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base"><Users className="h-5 w-5 text-emerald-600" /> Members</CardTitle>
+              {/* <CardDescription>{members.length} {members.length === 1 ? 'person' : 'people'} in this Aravt</CardDescription> */}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {membersError && <Alert variant="destructive"><AlertDescription>{membersError}</AlertDescription></Alert>}
+              {membersLoading ? (
+                <div className="flex justify-center py-10"><LoadingSpinner /></div>
+              ) : (
+                <>
+                  <div className="flex flex-col gap-3 rounded-2xl bg-slate-50 p-3 sm:flex-row">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                      <Input placeholder="Search members..." className="bg-white pl-9" value={memberSearchQuery} onChange={(e) => setMemberSearchQuery(e.target.value)} />
+                    </div>
+                    <Select value={memberRoleFilter} onValueChange={setMemberRoleFilter}>
+                      <SelectTrigger className="bg-white sm:w-[150px]"><SelectValue placeholder="Role" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All roles</SelectItem>
+                        <SelectItem value="leader">Leaders</SelectItem>
+                        <SelectItem value="member">Members</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-3">
+                    {filteredMembers.map((member) => (
+                      <MemberCard key={member.id} canManage={isLeader} aravtId={currentAravtId!} member={member} onRemoveMember={(userId) => currentAravtId ? removeMember(userId, currentAravtId) : Promise.resolve()} isLoading={membersLoading} />
+                    ))}
+                    {filteredMembers.length === 0 && <div className="rounded-xl border border-dashed py-10 text-center text-sm text-slate-500">No members match your search.</div>}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {aravtDetails?.telegram_chat_link && (
+              <a href={aravtDetails.telegram_chat_link} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-violet-200 hover:text-violet-700">
+                Open team chat <ArrowUpRight className="h-4 w-4" />
+              </a>
+            )}
+
+        </div>
 
         {isLeader && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Requests to Join your Aravt:</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {membersLoading ? (
-              <div className="py-8 flex justify-center"><LoadingSpinner /></div>
-            ) : (
-              pendingRequests.length === 0 ? (
-                <div className="py-8 text-center text-muted-foreground">No new join requests at the moment.</div>
-              ) : (
-                pendingRequests.map((application) => (
-                  <RequestCard
-                    key={application.id}
-                    request={application}
-                    onApprove={approveRequest}
-                    onReject={rejectRequest}
-                    isLoading={membersLoading}
-                  />
-                ))
-              )
-            )}
-          </CardContent>
-        </Card>
-      )}
+          <Card className="rounded-2xl border-slate-200 shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base"><Clock3 className="h-5 w-5 text-amber-500" /> Join requests</CardTitle>
+              <CardDescription>Review people who want to join your Aravt.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {membersLoading ? <div className="flex justify-center py-8"><LoadingSpinner /></div> : pendingRequests.length === 0 ? (
+                <div className="rounded-xl border border-dashed py-10 text-center text-sm text-slate-500">You’re all caught up. No pending requests.</div>
+              ) : pendingRequests.map((application) => (
+                <RequestCard key={application.id} request={application} onApprove={approveRequest} onReject={rejectRequest} isLoading={membersLoading} />
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </section>
 
-      
+      <section aria-labelledby="earnings-heading" className="space-y-8 pt-6 pb-2">
+        <div className="flex items-center gap-3">
+          {/* <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500 text-sm font-bold text-white shadow-sm">3</span> */}
+          <div>
+            <h2 id="earnings-heading" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">Aravt Earnings</h2>
+            {/* <p className="text-sm text-slate-500">Measure contribution and grow sustainable projects.</p> */}
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card className="rounded-2xl border-0 bg-gradient-to-br from-violet-600 to-indigo-700 text-white shadow-lg shadow-violet-200">
+            <CardContent className="p-5">
+              <CircleDollarSign className="mb-6 h-6 w-6 text-violet-200" />
+              <p className="text-sm text-violet-100">Total earned</p>
+              <p className="mt-1 text-3xl font-bold">${stats.tokensEarned}</p>
+            </CardContent>
+          </Card>
+          <Card className="rounded-2xl border-slate-200 shadow-sm">
+            <CardContent className="p-5">
+              <Target className="mb-6 h-6 w-6 text-emerald-500" />
+              <div className="flex items-end justify-between"><p className="text-sm text-slate-500">Rating</p><span className="text-xs text-slate-400">{stats.rankProgress}%</span></div>
+              <p className="mt-1 text-2xl font-bold text-slate-950">Rank {stats.rank}</p>
+              <Progress value={stats.rankProgress} className="mt-3 h-1.5" />
+            </CardContent>
+          </Card>
+          <Card className="rounded-2xl border-slate-200 shadow-sm">
+            <CardContent className="p-5">
+              <CheckCircle2 className="mb-6 h-6 w-6 text-amber-500" />
+              <div className="flex items-end justify-between"><p className="text-sm text-slate-500">Tasks completed</p><span className="text-xs text-slate-400">{stats.totalTasks ? Math.round((stats.tasksCompleted / stats.totalTasks) * 100) : 0}%</span></div>
+              <p className="mt-1 text-2xl font-bold text-slate-950">{stats.tasksCompleted}<span className="text-base font-medium text-slate-400"> / {stats.totalTasks}</span></p>
+              <Progress value={stats.totalTasks ? (stats.tasksCompleted / stats.totalTasks) * 100 : 0} className="mt-3 h-1.5" />
+            </CardContent>
+          </Card>
+        </div>
+
+        {aravtDetails && (
+          <Card className="rounded-2xl border-slate-200 shadow-sm">
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-base"><BriefcaseBusiness className="h-5 w-5 text-violet-600" /> Projects & Offers</CardTitle>
+                {/* <CardDescription className="mt-1.5">The business activity behind your team’s earnings.</CardDescription> */}
+              </div>
+              {isLeader && currentAravtId && <CreateProjectDialog aravt_id={currentAravtId} />}
+            </CardHeader>
+            <CardContent className="space-y-8">
+              <div>
+                {projectsLoading ? <div className="flex justify-center py-8"><LoadingSpinner /></div> : projects.length > 0 ? (
+                  <div className="grid gap-4 md:grid-cols-2">{projects.map((project: Project) => <ProjectCard key={project.id} project={project} />)}</div>
+                ) : <div className="rounded-xl border border-dashed py-10 text-center text-sm text-slate-500">No projects yet.</div>}
+              </div>
+              {aravtDetails.offers?.length > 0 && (
+                <div>
+                  <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-semibold text-slate-900">Active offers</h3><Badge variant="secondary" className="rounded-full">{aravtDetails.offers.length}</Badge></div>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {aravtDetails.offers.map((offer: AravtOffer) => (
+                      <div key={offer.id} className="flex items-start justify-between gap-4 rounded-2xl border border-slate-200 p-4">
+                        <div className="min-w-0"><h4 className="font-semibold text-slate-900">{offer.name}</h4><p className="mt-1 line-clamp-2 text-sm text-slate-500">{offer.description}</p>{offer.is_limited && <p className="mt-2 text-xs text-amber-600">{offer.count_left} remaining</p>}</div>
+                        <div className="shrink-0 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-bold text-emerald-700">${offer.price}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+      </section>
 
       {canCreateAravt && (
         <Button 
           variant="outline" 
           size="lg" 
           onClick={() => setIsFormOpen(true)}
-          className="w-full"
+          className="w-full rounded-2xl border-dashed py-6 text-slate-600"
         >
+          <Plus className="mr-2 h-4 w-4" />
           Create New Aravt
         </Button>
       )}
@@ -740,4 +742,4 @@ const AravtDashboard = () => {
   );
 };
 
-export default AravtDashboard; 
+export default AravtDashboard;

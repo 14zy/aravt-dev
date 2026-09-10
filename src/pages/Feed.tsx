@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import { getInitials } from "@/lib/avatarUtils";
@@ -113,6 +114,27 @@ const Feed = () => {
     [safeSubscriptions],
   );
 
+  const publications = useMemo(
+    () => [
+      {
+        title: "Aravt members releases the new ecosystem brief",
+        source: "Aravt #2",
+        time: "11.05.2026 11:00",
+      },
+      {
+        title: "Community members are onboarding new builders this week",
+        source: "Aravt #1",
+        time: "12.05.2026 14:30",
+      },
+      {
+        title: "Funding and collaboration opportunities are opening across regions",
+        source: "Aravt #51",
+        time: "14.05.2026 16:20",
+      },
+    ],
+    [],
+  );
+
   const handleSubscribe = async (userId: number) => {
     setActionInProgress(userId);
     setError(null);
@@ -177,11 +199,11 @@ const Feed = () => {
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
-        <section>
+      <div className="grid gap-6 xl:grid-cols-[1.7fr_0.9fr]">
+        <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>You Following</CardTitle>
+              <CardTitle>Posts from Friends</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {isLoading ? (
@@ -251,12 +273,37 @@ const Feed = () => {
               )}
             </CardContent>
           </Card>
-        </section>
 
-        <section className="space-y-4">
           <Card>
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <CardHeader>
+              <CardTitle>News from Aravts</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {publications.map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-lg border border-border bg-muted/20 p-3"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium">{item.title}</p>
+                    <Badge variant="secondary">{item.source}</Badge>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {item.time}
+                  </p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        <aside className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Who to follow</CardTitle>
+            
+            <div className="relative w-full p-4 pb-0">
+              <Search className="absolute left-7 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search people"
                 value={searchTerm}
@@ -264,9 +311,8 @@ const Feed = () => {
                 className="pl-10"
               />
             </div>
-            <CardHeader>
-              <CardTitle>Recommendations</CardTitle>
             </CardHeader>
+            
             <CardContent className="space-y-3">
               {filteredUsers.length === 0 && (
                 <p className="text-sm text-muted-foreground">
@@ -329,8 +375,23 @@ const Feed = () => {
               })}
             </CardContent>
           </Card>
-        </section>
+        </aside>
       </div>
+
+      {/* <Card>
+        <CardHeader>
+          <CardTitle>Publish a message</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Textarea
+            placeholder="Share an update with your network..."
+            className="min-h-[120px]"
+          />
+          <div className="flex justify-end">
+            <Button type="button">Post update</Button>
+          </div>
+        </CardContent>
+      </Card> */}
     </div>
   );
 };

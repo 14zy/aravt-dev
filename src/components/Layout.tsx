@@ -73,7 +73,7 @@ export default function Layout() {
       )}
 
       <main className="flex-grow w-full">
-        <div className="max-w-7xl w-full mx-auto py-6 sm:px-6 lg:px-8 flex flex-col">
+        <div className="max-w-7xl w-full mx-auto py-4 sm:px-6 lg:px-8 flex flex-col">
           <Outlet />
         </div>
       </main>

@@ -1,397 +1,397 @@
-import { useAuthStore } from "@/store/auth";
-import { useTonConnect } from "@/hooks/useTonConnect";
-import { useEffect, useState } from "react";
-import { TonConnectButton } from "@tonconnect/ui-react";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import SellToken from "@/components/client/SellToken";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTonConnect } from "@/hooks/useTonConnect";
 import ta from "@/lib/tonapi";
+import { useAuthStore } from "@/store/auth";
 import {
-  AccountEvent,
+  AccountAddress,
   Action,
-  TonTransferAction,
+  JettonPreview,
+  JettonSwapAction,
   JettonTransferAction,
   NftItemTransferAction,
-  JettonSwapAction,
-  AccountAddress,
-  JettonPreview,
-  EncryptedComment,
-  Refund,
+  TonTransferAction,
 } from "@ton-api/client";
+import { TonConnectButton } from "@tonconnect/ui-react";
 import { Address } from "@ton/core";
-import SellToken from "@/components/client/SellToken";
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+import {
+  Activity,
+  ArrowDownLeft,
+  ArrowRightLeft,
+  ArrowUpRight,
+  Banknote,
+  Check,
+  CircleAlert,
+  Coins,
+  Copy,
+  Image as ImageIcon,
+  Loader2,
+  RefreshCw,
+  ShieldCheck,
+  WalletCards,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface AccountInfo {
   balance: string;
-  last_activity: number;
+  lastActivity: number;
   status: string;
 }
 
 interface DisplayTransaction {
+  id: string;
+  timestamp: number;
   status: string;
+  type: string;
   amount?: string;
   comment?: string;
-  type:
-    | "TonTransfer"
-    | "JettonTransfer"
-    | "NftItemTransfer"
-    | "JettonSwap"
-    | unknown;
   sender?: AccountAddress;
   recipient?: AccountAddress;
-  encryptedComment?: EncryptedComment;
-  refund?: Refund;
-  nft?: string;
-  payload?: string;
-  sendersWallet?: Address;
-  recipientsWallet?: Address;
   jetton?: JettonPreview;
+  nft?: string;
   dex?: "stonfi" | "dedust" | "megatonfi";
   amountIn?: string;
   amountOut?: string;
   tonIn?: string;
   tonOut?: string;
-  userWallet?: AccountAddress;
-  router?: AccountAddress;
   jettonMasterIn?: JettonPreview;
   jettonMasterOut?: JettonPreview;
 }
 
+const processAction = (
+  action: Action,
+  eventId: string,
+  timestamp: number,
+): DisplayTransaction => {
+  const base = { id: eventId, timestamp, status: action.status, type: action.type };
+
+  switch (action.type) {
+    case "TonTransfer": {
+      const transfer = action.TonTransfer as TonTransferAction;
+      return {
+        ...base,
+        sender: transfer.sender,
+        recipient: transfer.recipient,
+        amount: transfer.amount.toString(),
+        comment: transfer.comment,
+      };
+    }
+    case "JettonTransfer": {
+      const transfer = action.JettonTransfer as JettonTransferAction;
+      return {
+        ...base,
+        sender: transfer.sender,
+        recipient: transfer.recipient,
+        amount: transfer.amount.toString(),
+        comment: transfer.comment,
+        jetton: transfer.jetton,
+      };
+    }
+    case "NftItemTransfer": {
+      const transfer = action.NftItemTransfer as NftItemTransferAction;
+      return {
+        ...base,
+        sender: transfer.sender,
+        recipient: transfer.recipient,
+        nft: transfer.nft,
+        comment: transfer.comment,
+      };
+    }
+    case "JettonSwap": {
+      const swap = action.JettonSwap as JettonSwapAction;
+      return {
+        ...base,
+        dex: swap.dex,
+        amountIn: swap.amountIn.toString(),
+        amountOut: swap.amountOut.toString(),
+        tonIn: swap.tonIn?.toString(),
+        tonOut: swap.tonOut?.toString(),
+        jettonMasterIn: swap.jettonMasterIn,
+        jettonMasterOut: swap.jettonMasterOut,
+      };
+    }
+    default:
+      return base;
+  }
+};
+
+const formatAddress = (address: string) =>
+  address.length > 14 ? `${address.slice(0, 7)}…${address.slice(-6)}` : address;
+
+const formatDate = (timestamp: number) =>
+  new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(timestamp * 1000));
+
+const getTransactionMeta = (transaction: DisplayTransaction) => {
+  switch (transaction.type) {
+    case "TonTransfer":
+      return { label: "TON transfer", icon: ArrowUpRight, color: "text-violet-600", background: "bg-violet-50" };
+    case "JettonTransfer":
+      return { label: transaction.jetton?.name || "Token transfer", icon: ArrowDownLeft, color: "text-emerald-600", background: "bg-emerald-50" };
+    case "NftItemTransfer":
+      return { label: "NFT transfer", icon: ImageIcon, color: "text-amber-600", background: "bg-amber-50" };
+    case "JettonSwap":
+      return { label: "Token swap", icon: ArrowRightLeft, color: "text-blue-600", background: "bg-blue-50" };
+    default:
+      return { label: transaction.type.replace(/([A-Z])/g, " $1").trim() || "Wallet activity", icon: Activity, color: "text-slate-600", background: "bg-slate-100" };
+  }
+};
+
 const Wallet = () => {
+  const user = useAuthStore((state) => state.user);
   const connectWallet = useAuthStore((state) => state.connectWallet);
-  const { connected, sender, account } = useTonConnect();
+  const { connected, account } = useTonConnect();
   const [transactions, setTransactions] = useState<DisplayTransaction[]>([]);
   const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLinking, setIsLinking] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const autoFetchedAddressRef = useRef<string | null>(null);
+  const requestInFlightRef = useRef(false);
 
-  useEffect(() => {
-    const initWallet = async () => {
-      if (connected && sender && account?.address) {
-        try {
-          //await linkWallet();
-          await fetchWalletData();
-        } catch (err) {
-          console.error("Wallet initialization error:", err);
-          setError(
-            err instanceof Error ? err.message : "Failed to initialize wallet",
-          );
-        }
-      }
-    };
-
-    initWallet();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected]); // Empty dependency array to run only once
-
-  const processAction = (action: Action): DisplayTransaction | null => {
-    const baseFields = {
-      status: action.status,
-      type: action.type,
-    };
-
-    switch (action.type) {
-      case "TonTransfer": {
-        const transfer = action.TonTransfer as TonTransferAction;
-        return {
-          ...baseFields,
-          sender: transfer.sender,
-          recipient: transfer.recipient,
-          amount: transfer.amount.toString(),
-          comment: transfer.comment,
-          encryptedComment: transfer.encryptedComment,
-          refund: transfer.refund,
-        };
-      }
-
-      case "JettonTransfer": {
-        const transfer = action.JettonTransfer as JettonTransferAction;
-        return {
-          ...baseFields,
-          sender: transfer.sender,
-          recipient: transfer.recipient,
-          amount: transfer.amount.toString(),
-          comment: transfer.comment,
-          jetton: transfer.jetton,
-          sendersWallet: transfer.sendersWallet,
-          recipientsWallet: transfer.recipientsWallet,
-          encryptedComment: transfer.encryptedComment,
-          refund: transfer.refund,
-        };
-      }
-
-      case "NftItemTransfer": {
-        const transfer = action.NftItemTransfer as NftItemTransferAction;
-        return {
-          ...baseFields,
-          sender: transfer.sender,
-          recipient: transfer.recipient,
-          nft: transfer.nft,
-          comment: transfer.comment,
-          payload: transfer.payload,
-          refund: transfer.refund,
-        };
-      }
-
-      case "JettonSwap": {
-        const swap = action.JettonSwap as JettonSwapAction;
-        return {
-          ...baseFields,
-          dex: swap.dex,
-          amountIn: swap.amountIn.toString(),
-          amountOut: swap.amountOut.toString(),
-          tonIn: swap.tonIn?.toString(),
-          tonOut: swap.tonOut?.toString(),
-          userWallet: swap.userWallet,
-          router: swap.router,
-          jettonMasterIn: swap.jettonMasterIn,
-          jettonMasterOut: swap.jettonMasterOut,
-        };
-      }
-
-      default:
-        return { ...baseFields };
-    }
-  };
-
-  const fetchWalletData = async () => {
-    if (!account?.address) return;
-    await sleep(1000);
-
+  const fetchWalletData = useCallback(async () => {
+    if (!account?.address || requestInFlightRef.current) return;
+    requestInFlightRef.current = true;
     setIsLoading(true);
     setError(null);
 
     try {
-      // Get account info
-      const accountInfo = await ta.accounts.getAccount(
-        Address.parse(account.address),
-      );
-      setAccountInfo({
-        balance: accountInfo.balance.toString(),
-        last_activity: accountInfo.lastActivity ?? 0,
-        status: accountInfo.status,
-      });
-      await sleep(1000);
+      const parsedAddress = Address.parse(account.address);
+      const [accountResult, historyResult] = await Promise.allSettled([
+        ta.accounts.getAccount(parsedAddress),
+        ta.accounts.getAccountEvents(parsedAddress, { limit: 10 }),
+      ]);
 
-      // Get transaction history
-      const history = await ta.accounts.getAccountEvents(
-        Address.parse(account.address),
-        {
-          limit: 10,
-        },
-      );
+      if (accountResult.status === "fulfilled") {
+        setAccountInfo({
+          balance: accountResult.value.balance.toString(),
+          lastActivity: accountResult.value.lastActivity ?? 0,
+          status: accountResult.value.status,
+        });
+      }
 
-      // Transform API transactions into display transactions
-      const displayTransactions = history.events
-        .map((event) => {
-          if (event.actions.length === 0) return null;
-          return processAction(event.actions[0]);
-        })
-        .filter((tx): tx is DisplayTransaction => tx !== null);
+      if (historyResult.status === "fulfilled") {
+        setTransactions(
+          historyResult.value.events
+          .filter((event) => event.actions.length > 0)
+          .map((event) => processAction(event.actions[0], event.eventId, event.timestamp)),
+        );
+      }
 
-      setTransactions(displayTransactions);
-    } catch (err) {
-      console.error("Wallet data fetch error:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch wallet data",
-      );
+      if (accountResult.status === "rejected" || historyResult.status === "rejected") {
+        const message = accountResult.status === "fulfilled"
+          ? "Balance loaded, but recent activity is temporarily unavailable."
+          : historyResult.status === "fulfilled"
+            ? "Activity loaded, but the current balance is temporarily unavailable."
+            : "TON wallet data is temporarily unavailable. Check your connection or TON API configuration and try again.";
+        setError(message);
+      }
+    } catch {
+      setError("The wallet address could not be read. Reconnect your wallet and try again.");
     } finally {
+      requestInFlightRef.current = false;
       setIsLoading(false);
     }
-  };
+  }, [account?.address]);
 
-  const linkWallet = async () => {
+  useEffect(() => {
     if (!connected || !account?.address) {
-      throw new Error("Wallet not connected");
+      autoFetchedAddressRef.current = null;
+      return;
     }
 
+    if (autoFetchedAddressRef.current === account.address) return;
+    autoFetchedAddressRef.current = account.address;
+    void fetchWalletData();
+  }, [account?.address, connected, fetchWalletData]);
+
+  const balance = useMemo(
+    () => accountInfo
+      ? (Number(accountInfo.balance) / 1e9).toLocaleString(undefined, { maximumFractionDigits: 4 })
+      : "—",
+    [accountInfo],
+  );
+  const isLinked = Boolean(account?.address && user?.wallet_address === account.address);
+
+  const copyAddress = async () => {
+    if (!account?.address) return;
+    await navigator.clipboard.writeText(account.address);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  };
+
+  const linkConnectedWallet = async () => {
+    if (!account?.address) return;
+    setIsLinking(true);
+    setError(null);
     try {
       await connectWallet(account.address);
     } catch (err) {
-      console.error("Wallet linking error:", err);
-      throw err;
+      setError(err instanceof Error ? err.message : "Failed to link wallet to profile");
+    } finally {
+      setIsLinking(false);
     }
   };
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleString();
-  };
-
-  const formatAddress = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
-
   return (
-    <div className="container mx-auto space-y-6">
-      <div className="w-full flex justify-center gap-4">
-        <TonConnectButton />
-        {connected && sender && account && (
-          <Button
-            onClick={fetchWalletData}
-            disabled={isLoading}
-            className="flex items-center gap-2"
-          >
-            {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Refresh
-          </Button>
-        )}
-      </div>
+    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-4 sm:px-0 sm:py-6">
+      <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <Badge variant="secondary" className="mb-3 rounded-full px-3 py-1">TON wallet</Badge>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Wallet</h1>
+          <p className="mt-2 text-sm text-slate-500">Your balance, Aravt tokens, and recent activity in one place.</p>
+        </div>
+        <div className="self-start sm:self-auto"><TonConnectButton /></div>
+      </header>
 
-      <Card>
-        <CardContent>
-          <SellToken />
-        </CardContent>
-      </Card>
+      {!connected || !account ? (
+        <Card className="overflow-hidden rounded-3xl border-slate-200 shadow-sm">
+          <CardContent className="relative flex min-h-[360px] flex-col items-center justify-center p-8 text-center">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(139,92,246,0.12),_transparent_55%)]" />
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-xl shadow-slate-200">
+              <WalletCards className="h-7 w-7" />
+            </div>
+            <h2 className="relative mt-6 text-xl font-bold text-slate-950">Connect your wallet</h2>
+            <p className="relative mt-2 max-w-sm text-sm leading-6 text-slate-500">Connect a TON wallet to view your balance, buy Aravt tokens, and see your latest transactions.</p>
+            <div className="relative mt-6"><TonConnectButton /></div>
+            <div className="relative mt-5 flex items-center gap-2 text-xs text-slate-400"><ShieldCheck className="h-4 w-4" /> Your keys always stay in your wallet.</div>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {error && (
+            <Alert variant="destructive" className="rounded-2xl">
+              <CircleAlert className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>My Earnings</CardTitle>
-          <div className="space-y-2">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2">Date</th>
-                  <th className="text-left py-2">Amount</th>
-                  <th className="text-left py-2">Project</th>
-                </tr>
-              </thead>
-              <tbody>
-                
-                
-                
-                
-                
-              </tbody>
-            </table>
+          <section className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(300px,0.75fr)]">
+            <Card className="relative overflow-hidden rounded-3xl border-0 bg-slate-950 text-white shadow-xl shadow-slate-200">
+              <div className="absolute -right-12 -top-20 h-56 w-56 rounded-full bg-violet-500/30 blur-3xl" />
+              <div className="absolute -bottom-24 left-1/4 h-52 w-52 rounded-full bg-blue-500/20 blur-3xl" />
+              <CardContent className="relative flex min-h-[270px] flex-col justify-between p-6 sm:p-8">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-2 text-sm text-slate-300"><span className="h-2 w-2 rounded-full bg-emerald-400" /> Connected</div>
+                  <Button variant="ghost" size="icon" className="rounded-full text-slate-300 hover:bg-white/10 hover:text-white" onClick={fetchWalletData} disabled={isLoading} aria-label="Refresh wallet">
+                    <RefreshCw className={isLoading ? "animate-spin" : ""} />
+                  </Button>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-400">Available balance</p>
+                  <div className="mt-2 flex items-baseline gap-2"><span className="text-4xl font-bold tracking-tight sm:text-5xl">{balance}</span><span className="text-lg font-semibold text-slate-400">TON</span></div>
+                </div>
+                <button type="button" onClick={copyAddress} className="flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300 transition hover:bg-white/10 hover:text-white">
+                  <span className="font-mono">{formatAddress(account.address)}</span>
+                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                </button>
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-3xl border-slate-200 shadow-sm">
+              <CardHeader>
+                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50"><Coins className="h-5 w-5 text-violet-600" /></div>
+                <CardTitle className="text-lg">Buy Aravt tokens</CardTitle>
+                <CardDescription>Convert TON into $ARAVT directly from your connected wallet.</CardDescription>
+              </CardHeader>
+              <CardContent className="[&>div]:p-0 [&_h1]:hidden"><SellToken /></CardContent>
+            </Card>
+          </section>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className={`flex h-9 w-9 items-center justify-center rounded-full ${isLinked ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"}`}>
+                {isLinked ? <Check className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-900">{isLinked ? "Linked to your Aravt profile" : "Link this wallet to your profile"}</p>
+                <p className="text-xs text-slate-500">{accountInfo?.status || "Wallet status unavailable"}{accountInfo?.lastActivity ? ` · Active ${formatDate(accountInfo.lastActivity)}` : ""}</p>
+              </div>
+            </div>
+            {!isLinked && <Button variant="outline" size="sm" className="rounded-xl" onClick={linkConnectedWallet} disabled={isLinking}>{isLinking && <Loader2 className="animate-spin" />} Link wallet</Button>}
           </div>
-        </CardHeader>
-        <CardContent className="space-y-4"></CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>My Transactions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {isLoading && (
-            <div className="flex justify-center">
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </div>
-          )}
-
-          {error && <div className="text-red-500 text-center">{error}</div>}
-
-          {accountInfo && (
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">Account Info</h3>
-              <div className="space-y-2">
-                <p>
-                  Balance: {(Number(accountInfo.balance) / 1e9).toFixed(2)} TON
-                </p>
-                <p>Last Activity: {formatDate(accountInfo.last_activity)}</p>
-                <p>Status: {accountInfo.status}</p>
-              </div>
-            </div>
-          )}
-
-          {transactions.length > 0 && (
-            <div>
-              <h3 className="font-semibold mb-2">Recent Transactions</h3>
-              <div className="space-y-2">
-                {transactions.map((tx) => (
-                  <div
-                    key={`${tx.type}-${tx.sender?.address}-${tx.recipient?.address}`}
-                    className="bg-white p-4 rounded-lg border"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="text-sm text-gray-500">
-                          Status: {tx.status}
-                        </p>
-                        {tx.comment && (
-                          <p className="text-sm">Comment: {tx.comment}</p>
-                        )}
-
-                        {tx.type === "JettonTransfer" && tx.jetton && (
-                          <div className="mt-2">
-                            <p className="text-sm font-medium">
-                              Token: {tx.jetton.symbol} ({tx.jetton.name})
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Amount: {tx.amount} {tx.jetton.symbol}
-                            </p>
-                          </div>
-                        )}
-
-                        {tx.type === "NftItemTransfer" && (
-                          <div className="mt-2">
-                            <p className="text-sm font-medium">NFT Transfer</p>
-                            <p className="text-xs text-gray-500">
-                              NFT Address: {formatAddress(tx.nft || "")}
-                            </p>
-                          </div>
-                        )}
-
-                        {tx.type === "JettonSwap" && (
-                          <div className="mt-2">
-                            <p className="text-sm font-medium">
-                              DEX: {tx.dex?.toUpperCase()}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Swap: {tx.amountIn} {tx.jettonMasterIn?.symbol} →{" "}
-                              {tx.amountOut} {tx.jettonMasterOut?.symbol}
-                            </p>
-                            {(tx.tonIn || tx.tonOut) && (
-                              <p className="text-xs text-gray-500">
-                                TON:{" "}
-                                {tx.tonIn && `${Number(tx.tonIn) / 1e9} IN`}{" "}
-                                {tx.tonOut && `${Number(tx.tonOut) / 1e9} OUT`}
-                              </p>
-                            )}
-                          </div>
-                        )}
+          <Card className="rounded-3xl border-slate-200 shadow-sm">
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <div><CardTitle className="text-lg">Recent activity</CardTitle><CardDescription className="mt-1.5">The latest events from this wallet.</CardDescription></div>
+              <Activity className="h-5 w-5 text-slate-400" />
+            </CardHeader>
+            <CardContent>
+              {isLoading && transactions.length === 0 ? (
+                <div className="flex items-center justify-center gap-2 py-16 text-sm text-slate-500"><Loader2 className="h-5 w-5 animate-spin" /> Loading activity...</div>
+              ) : transactions.length === 0 ? (
+                <div className="rounded-2xl border border-dashed py-16 text-center"><Activity className="mx-auto h-7 w-7 text-slate-300" /><p className="mt-3 text-sm font-medium text-slate-700">No activity yet</p><p className="mt-1 text-xs text-slate-400">New wallet activity will appear here.</p></div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {transactions.map((transaction) => {
+                    const meta = getTransactionMeta(transaction);
+                    const Icon = meta.icon;
+                    return (
+                      <div key={transaction.id} className="flex items-center gap-3 py-4 first:pt-0 last:pb-0">
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${meta.background} ${meta.color}`}><Icon className="h-4 w-4" /></div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2"><p className="truncate text-sm font-semibold text-slate-900">{meta.label}</p>{transaction.status !== "ok" && <Badge variant="secondary" className="rounded-full text-[10px]">{transaction.status}</Badge>}</div>
+                          <p className="mt-0.5 truncate text-xs text-slate-500">{transaction.comment || formatDate(transaction.timestamp)}</p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          {transaction.type === "TonTransfer" && transaction.amount && <p className="text-sm font-semibold text-slate-900">{(Number(transaction.amount) / 1e9).toLocaleString(undefined, { maximumFractionDigits: 4 })} TON</p>}
+                          {transaction.type === "JettonTransfer" && transaction.amount && <p className="text-sm font-semibold text-slate-900">{Number(transaction.amount).toLocaleString()} {transaction.jetton?.symbol}</p>}
+                          {transaction.type === "JettonSwap" && <p className="text-sm font-semibold text-slate-900">{transaction.amountIn} → {transaction.amountOut}</p>}
+                          <p className="mt-0.5 text-xs text-slate-400">{formatDate(transaction.timestamp)}</p>
+                        </div>
                       </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-                      <div className="text-right">
-                        {tx.type === "TonTransfer" && tx.amount && (
-                          <p
-                            className={`font-medium ${Number(tx.amount) >= 0 ? "text-green-600" : "text-red-600"}`}
-                          >
-                            {(Number(tx.amount) / 1e9).toFixed(2)} TON
-                          </p>
-                        )}
-                        {tx.type === "JettonTransfer" &&
-                          tx.amount &&
-                          tx.jetton && (
-                            <p className="font-medium">
-                              {Number(tx.amount).toLocaleString()}{" "}
-                              {tx.jetton.symbol}
-                            </p>
-                          )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+          <Card className="rounded-3xl border-slate-200 shadow-sm">
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle className="text-lg">My Earnings</CardTitle>
+                <CardDescription className="mt-1.5">Rewards earned from completed project work.</CardDescription>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      {/* <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => window.open('https://db.aravt.io', '_blank')}
-          >
-            Register TON Wallet
-          </Button> */}
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                <Banknote className="h-5 w-5" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-hidden rounded-2xl border border-slate-200">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[520px] text-sm">
+                    <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-medium">Date</th>
+                        <th className="px-4 py-3 text-left font-medium">Amount</th>
+                        <th className="px-4 py-3 text-left font-medium">Project</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td colSpan={3} className="px-4 py-12 text-center">
+                          <Banknote className="mx-auto h-6 w-6 text-slate-300" />
+                          <p className="mt-3 font-medium text-slate-700">No earnings yet</p>
+                          <p className="mt-1 text-xs text-slate-400">Project rewards will appear here after they are paid.</p>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 };

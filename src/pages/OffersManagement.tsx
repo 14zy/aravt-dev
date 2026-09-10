@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -90,7 +90,7 @@ const OffersManagement = () => {
             )}
             <h2 className="text-xl font-semibold">🌀 {project.name}</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {offersByProject[project.id]?.map((offer) => (
               <OfferCard key={offer.id} offer={offer} />
             )) || (
@@ -111,14 +111,17 @@ function OfferCard({ offer }: { offer: Offer }) {
         
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 pb-2">
           <div>
             <CardDescription>{offer.description}</CardDescription>
-            <p className="font-medium">Price: ${offer.price}</p>
+            
             
             
           </div>
-          <div>
+          
+        </div>
+        
+        <div className="pb-1">
             <p>Validity {offer.duration} days</p>
             {offer.is_limited && (
               <p className="text-amber-600">
@@ -126,11 +129,16 @@ function OfferCard({ offer }: { offer: Offer }) {
               </p>
             )}
           </div>
-        </div>
-        <Button className="m-2" disabled variant="outline" size="sm">Purchase</Button>
-        <Button className="m-2" disabled variant="outline" size="sm">Request</Button>
 
+        <p className="font-medium">Price: ${offer.price}</p>
+        
       </CardContent>
+      <CardFooter>  
+         <div className="grid grid-cols-2">
+          <Button className="m-2" variant="outline" size="sm">Buy</Button>
+          <Button className="m-2" disabled variant="outline" size="sm">Ask</Button>
+        </div>
+      </CardFooter>
     </Card>
   )
 }
