@@ -62,10 +62,10 @@ const Login = ({ onLoginSuccess }: LoginProps): JSX.Element => {
 
   return (
     <div className="flex justify-center min-h-screen bg-gray-50 pt-4">
-      <Card className="w-full max-w-md mx-4 pt-3">
+      <Card className="w-full max-w-md mx-4">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-between pb-2">
-            <CardTitle className="text-2xl">Welcome to Aravt</CardTitle>
+            <CardTitle className="text-2xl">ARAVT.IO</CardTitle>
 
             <Select defaultValue="all">
               <SelectTrigger className="w-[64px]">
@@ -82,11 +82,31 @@ const Login = ({ onLoginSuccess }: LoginProps): JSX.Element => {
             </Select>
 
           </div>
-          <CardDescription>
+          {/* <CardDescription>
             Please log in or register to continue
-          </CardDescription>
+          </CardDescription> */}
         </CardHeader>
-        <CardContent className="space-y-4">
+
+        <div className="relative w-full  ">
+                <p className="text-lg pb-4 font-semibold">Welcome to Aravt</p>
+
+                <iframe
+                  width="560"
+                  height="315"
+                  src="https://www.youtube.com/embed/wUE58WtpcAc?si=uX2H-7UJMIvOvSAf"
+                  title="YouTube video player"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                  className="w-full h-64 pt-2"
+                ></iframe>
+                <a href="https://www.youtube.com/@aravtsystems" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  YouTube.com/@aravtsystems
+                </a>
+              </div>
+              
+        <CardContent className="space-y-4 pt-4">
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
@@ -199,21 +219,7 @@ const Login = ({ onLoginSuccess }: LoginProps): JSX.Element => {
                 </div>
               </form>
 
-              <div className="relative w-full mt-4 pt-4">
-                <b>Introduction</b>
-
-                <iframe
-                  width="560"
-                  height="315"
-                  src="https://www.youtube.com/embed/wUE58WtpcAc?si=uX2H-7UJMIvOvSAf"
-                  title="YouTube video player"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                  allowFullScreen
-                  className="w-full h-64 pt-2"
-                ></iframe>
-              </div>
+              
 
               <div className="relative w-full h-80 mt-4">
 
@@ -230,7 +236,7 @@ const Login = ({ onLoginSuccess }: LoginProps): JSX.Element => {
                     rel="noopener noreferrer"
                     className="text-white text-lg font-semibold bg-blue-500 px-4 py-2 rounded-md hover:bg-blue-600"
                   >
-                    Join Community
+                    Join TG Community
                   </a>
                 </div>
 
