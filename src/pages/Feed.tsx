@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import { getInitials } from "@/lib/avatarUtils";
@@ -15,6 +14,17 @@ import { AxiosError } from "axios";
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
+const normalizeUsers = (value: unknown): User[] => {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === "object") {
+    const candidate = (value as Record<string, unknown>).users;
+    if (Array.isArray(candidate)) return candidate as User[];
+    const fallback = (value as Record<string, unknown>).results;
+    if (Array.isArray(fallback)) return fallback as User[];
+  }
+  return [];
+};
+
 const Feed = () => {
   const authUser = useAuthStore((state) => state.user);
   const [users, setUsers] = useState<User[]>([]);
@@ -23,23 +33,6 @@ const Feed = () => {
   const [actionInProgress, setActionInProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-
-  const normalizeUsers = (value: unknown): User[] => {
-    if (Array.isArray(value)) return value;
-    if (value && typeof value === "object") {
-      const candidate = (value as Record<string, unknown>).users;
-      if (Array.isArray(candidate)) return candidate as User[];
-      const fallback = (value as Record<string, unknown>).results;
-      if (Array.isArray(fallback)) return fallback as User[];
-    }
-    return [];
-  };
-
-  const loadSubscriptions = async () => {
-    const subscribed = normalizeUsers(await api.users_subscriptions());
-    setSubscriptions(subscribed);
-    return subscribed;
-  };
 
   useEffect(() => {
     const load = async () => {
@@ -66,7 +59,7 @@ const Feed = () => {
           }
         }
 
-        const subscribedData = await loadSubscriptions();
+        const subscribedData = normalizeUsers(await api.users_subscriptions());
 
         const filtered = allUsersResponse.filter(
           (user) => user.id !== authUser.id && !user.is_deleted,
@@ -86,11 +79,9 @@ const Feed = () => {
     load();
   }, [authUser]);
 
-  const safeSubscriptions = Array.isArray(subscriptions) ? subscriptions : [];
-
   const subscribedIds = useMemo(
-    () => new Set(safeSubscriptions.map((user) => user.id)),
-    [safeSubscriptions],
+    () => new Set(subscriptions.map((user) => user.id)),
+    [subscriptions],
   );
 
   const filteredUsers = useMemo(() => {
@@ -107,11 +98,11 @@ const Feed = () => {
 
   const feedEntries = useMemo(
     () =>
-      safeSubscriptions.map((user, index) => ({
+      subscriptions.map((user, index) => ({
         user,
         activity: `Shared a new update ${index + 1} hours ago`,
       })),
-    [safeSubscriptions],
+    [subscriptions],
   );
 
   const publications = useMemo(
@@ -140,7 +131,7 @@ const Feed = () => {
     setError(null);
     try {
       await api.users_user_subscribe(userId);
-      await loadSubscriptions();
+      setSubscriptions(normalizeUsers(await api.users_subscriptions()));
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to subscribe to user";
@@ -155,7 +146,7 @@ const Feed = () => {
     setError(null);
     try {
       await api.users_user_unsubscribe(userId);
-      await loadSubscriptions();
+      setSubscriptions(normalizeUsers(await api.users_subscriptions()));
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to unsubscribe from user";

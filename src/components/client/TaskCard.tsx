@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
+import { safeExternalUrl } from "@/lib/safeUrl";
 import { Task, TaskCompletion } from "@/types";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -58,6 +59,8 @@ export const TaskCard = ({
         .filter(Boolean) as string[],
     [completions],
   );
+  const businessUrl = safeExternalUrl(task.business?.link);
+  const taskUrl = safeExternalUrl(task.link);
 
   return (
     <Card className="hover:bg-gray-50 max-w-3xl w-full">
@@ -96,11 +99,11 @@ export const TaskCard = ({
             {!task.one_time ? " 🔁 " : null}
             {task.description}
           </p>
-          {task.business && (
+          {task.business && businessUrl && (
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <span>Project:</span>
               <a
-                href={task.business.link ?? "#"}
+                href={businessUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-500 hover:underline flex items-center gap-1"
@@ -122,9 +125,9 @@ export const TaskCard = ({
               </div>
 
               <div>
-                {task.link && task.link !== "No link yet" && (
+                {taskUrl && task.link !== "No link yet" && (
                   <a
-                    href={task.link}
+                    href={taskUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center text-blue-500 hover:text-blue-600"

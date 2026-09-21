@@ -22,6 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Local configuration and credentials. Keep the example file committed.
 .env
-.env.development
+.env.*
+*.env
+!.env.example
 *.pem
+*.key
+*.p12
+*.pfx
+*credentials*
+*secrets*

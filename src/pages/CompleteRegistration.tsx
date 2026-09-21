@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
 import { useSearchParams } from 'react-router-dom';
@@ -10,7 +10,7 @@ const CompleteRegistration = () => {
 
   const token = searchParams.get('token');
 
-  const completeRegistration = async () => {
+  const completeRegistration = useCallback(async () => {
     try {
       if (!token) {
         setError('No token provided');
@@ -19,14 +19,14 @@ const CompleteRegistration = () => {
 
       await api.complete_registration(token);
       navigate('/login');
-    } catch (err) {
+    } catch {
       setError('Failed to complete registration');
     }
-  };
+  }, [navigate, token]);
 
   useEffect(() => {
     completeRegistration();
-  }, []);  
+  }, [completeRegistration]);
   
   return (
     <div>

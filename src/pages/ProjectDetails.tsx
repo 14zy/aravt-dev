@@ -41,6 +41,7 @@ interface ProjectMockData {
     role: string;
     tasksCompleted: number;
     status: 'online' | 'offline';
+    avatar?: string;
   }>;
 }
 
@@ -241,8 +242,8 @@ const ProjectDetails = () => {
                 <div key={member.id} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      {(member as any).avatar && (
-                        <AvatarImage src={(member as any).avatar} alt={member.name} />
+                      {member.avatar && (
+                        <AvatarImage src={member.avatar} alt={member.name} />
                       )}
                       <AvatarFallback>
                         {getInitials(member.name)}
@@ -334,4 +335,4 @@ const ProjectDetails = () => {
   );
 };
 
-export default ProjectDetails; 
+export default ProjectDetails;

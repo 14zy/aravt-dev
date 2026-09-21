@@ -16,8 +16,9 @@ export function useSell() {
                 const sellAddress = Address.parse(import.meta.env.VITE_TOKEN_SELL_ADDRESS as string); // Use the environment variable
                 const sell = await client.open(await Sell.fromAddress(sellAddress));
                 setSell(sell);
-            } catch (err: any) {
-                setError("Failed to initialize Sell: " + err.message);
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : "Unknown error";
+                setError("Failed to initialize Sell: " + message);
             }
         };
 

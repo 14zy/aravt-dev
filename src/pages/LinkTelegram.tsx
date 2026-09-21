@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
 import { useSearchParams } from 'react-router-dom';
@@ -10,7 +10,7 @@ const LinkTelegram = () => {
 
   const token = searchParams.get('token');
 
-  const linkTelegram = async () => {
+  const linkTelegram = useCallback(async () => {
     try {
       if (!token) {
         setError('No token provided');
@@ -22,14 +22,14 @@ const LinkTelegram = () => {
       navigate('/dashboard');
       // console.log(token);
 
-    } catch (err) {
+    } catch {
       setError('Failed to link telegram');
     }
-  };
+  }, [navigate, token]);
 
   useEffect(() => {
     linkTelegram();
-  }, []);  
+  }, [linkTelegram]);
   
   return (
     <div>

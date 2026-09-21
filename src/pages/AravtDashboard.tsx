@@ -20,6 +20,7 @@ import useSelectedAravt from '@/hooks/useSelectedAravt';
 import { getInitials } from '@/lib/avatarUtils';
 import { api } from '@/lib/api';
 import { isUserLeaderOfAravt } from '@/lib/permissions';
+import { safeExternalUrl } from '@/lib/safeUrl';
 import { useAdminStore } from '@/store/admin';
 import { useAravtsStore } from '@/store/aravts';
 import { useOffersStore } from '@/store/offers';
@@ -31,7 +32,6 @@ import type { AravtOffer, Project, Task } from '@/types';
 import {
   ArrowUpRight,
   Banknote,
-  Bell,
   BriefcaseBusiness,
   CheckCircle2,
   CircleDollarSign,
@@ -632,8 +632,8 @@ const AravtDashboard = () => {
             </CardContent>
           </Card>
 
-          {aravtDetails?.telegram_chat_link && (
-              <a href={aravtDetails.telegram_chat_link} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-violet-200 hover:text-violet-700">
+          {safeExternalUrl(aravtDetails?.telegram_chat_link) && (
+              <a href={safeExternalUrl(aravtDetails?.telegram_chat_link)} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-violet-200 hover:text-violet-700">
                 Open team chat <ArrowUpRight className="h-4 w-4" />
               </a>
             )}

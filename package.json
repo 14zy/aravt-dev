@@ -1,12 +1,27 @@
 {
-  "name": "ara",
+  "name": "aravt-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "Open-source web frontend for the Aravt collaboration platform.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/14zy/aravt-dev.git"
+  },
+  "bugs": {
+    "url": "https://github.com/14zy/aravt-dev/issues"
+  },
+  "homepage": "https://github.com/14zy/aravt-dev#readme",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "check": "npm run lint && npm run build",
+    "audit:prod": "npm audit --omit=dev --audit-level=high",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -32,12 +47,11 @@
     "react": "^18.3.1",
     "react-datepicker": "^7.5.0",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.28.0",
+    "react-router-dom": "^7.18.4",
     "react-toastify": "^11.0.2",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
     "tonapi-sdk-js": "^2.0.6",
-    "vite-plugin-node-polyfills": "^0.22.0",
     "zustand": "^5.0.1"
   },
   "devDependencies": {
@@ -46,7 +60,7 @@
     "@types/node": "^22.9.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.3",
+    "@vitejs/plugin-react": "^5.2.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.13.0",
     "eslint-plugin-react-hooks": "^5.0.0",
@@ -56,6 +70,6 @@
     "tailwindcss": "^3.4.14",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.11.0",
-    "vite": "^5.4.10"
+    "vite": "^7.3.6"
   }
 }

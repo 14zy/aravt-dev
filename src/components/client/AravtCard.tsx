@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { getInitials } from '@/lib/avatarUtils';
+import { safeExternalUrl } from '@/lib/safeUrl';
 import { useAravtsStore } from '@/store/aravts';
 import { AravtDetails, AravtListItem, Project } from '@/types';
 import { Briefcase, Tag, Users } from 'lucide-react';
@@ -71,18 +72,21 @@ const AravtCard = ({ aravt }: AravtCardProps) => {
               {/* Business Projects */}
               {detailedAravt?.business && detailedAravt.business.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {detailedAravt.business.map((project: Project) => (
-                    <div key={project.id} className="flex items-center gap-1 text-sm bg-blue-50 text-blue-700 rounded-full px-3 py-0.5">
-                      <Briefcase className="h-3 w-3 shrink-0" />
-                      <span className="truncate max-w-[180px]">
-                        {project.link ? (
-                          <a href={project.link} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                            {project.name}
-                          </a>
-                        ) : project.name}
-                      </span>
-                    </div>
-                  ))}
+                  {detailedAravt.business.map((project: Project) => {
+                    const projectUrl = safeExternalUrl(project.link);
+                    return (
+                      <div key={project.id} className="flex items-center gap-1 text-sm bg-blue-50 text-blue-700 rounded-full px-3 py-0.5">
+                        <Briefcase className="h-3 w-3 shrink-0" />
+                        <span className="truncate max-w-[180px]">
+                          {projectUrl ? (
+                            <a href={projectUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                              {project.name}
+                            </a>
+                          ) : project.name}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
@@ -158,11 +162,11 @@ const AravtCard = ({ aravt }: AravtCardProps) => {
 
           </div>
 
-          {detailedAravt.telegram_chat_link && (
+          {safeExternalUrl(detailedAravt.telegram_chat_link) && (
             <div>
               <h4 className="font-medium text-sm text-gray-500">Telegram Chat</h4>
               <a 
-                href={detailedAravt.telegram_chat_link} 
+                href={safeExternalUrl(detailedAravt.telegram_chat_link)}
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-blue-500 hover:underline"
@@ -232,4 +236,4 @@ const AravtCard = ({ aravt }: AravtCardProps) => {
   );
 };
 
-export default AravtCard; 
+export default AravtCard;
