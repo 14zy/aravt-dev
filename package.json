@@ -36,7 +36,7 @@
     "@radix-ui/react-tabs": "^1.1.1",
     "@ton-api/client": "^0.3.0",
     "@ton/core": "^0.59.1",
-    "@ton/ton": "^15.1.0",
+    "@ton/ton": "^16.3.0",
     "@tonconnect/ui-react": "^2.0.9",
     "axios": "^1.7.7",
     "buffer": "^6.0.3",
