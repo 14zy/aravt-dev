@@ -58,6 +58,11 @@ const AravtCard = ({ aravt }: AravtCardProps) => {
     }
   };
 
+  function navigateToAravt(event: React.MouseEvent<HTMLHeadingElement>): void {
+    event.preventDefault();
+    window.location.href = `/aravts/${aravt.id}`;
+  }
+
   return (
     <Card className="p-6 hover:bg-gray-50 transition-colors">
       {/* Basic Info - Always Visible */}
@@ -66,8 +71,8 @@ const AravtCard = ({ aravt }: AravtCardProps) => {
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-start">
             <div className="space-y-1">
-              <h3 className="text-lg text-left font-semibold">{aravt.id}. {aravt.name}</h3>
-              <p className="text-gray-500 text-left ">{aravt.description}</p>
+              <h3 onClick={navigateToAravt} className="text-lg text-left font-semibold">{aravt.id}. {aravt.name}</h3>
+              <p onClick={navigateToAravt} className="text-gray-500 text-left ">{aravt.description}</p>
 
               {/* Business Projects */}
               {detailedAravt?.business && detailedAravt.business.length > 0 && (
@@ -118,7 +123,7 @@ const AravtCard = ({ aravt }: AravtCardProps) => {
           </div>
         </div>
 
-        <Avatar className="h-[100px] w-[100px] rounded-lg">
+        <Avatar onClick={navigateToAravt} className="h-[100px] w-[100px] rounded-lg">
           <AvatarFallback className="rounded-lg bg-gray-100">
             {aravt.name.substring(0, 2)}
           </AvatarFallback>

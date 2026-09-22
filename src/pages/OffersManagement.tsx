@@ -88,7 +88,7 @@ const OffersManagement = () => {
             {project.logo && (
               <img src={project.logo} alt={project.name} className="h-6 w-6" />
             )}
-            <h2 className="text-xl font-semibold">🌀 {project.name}</h2>
+            <h2 className="text-xl font-semibold">{project.name}</h2> <small><a href={`/aravts/${currentAravtId}`}>(🌀Aravt №{currentAravtId})</a></small>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {offersByProject[project.id]?.map((offer) => (

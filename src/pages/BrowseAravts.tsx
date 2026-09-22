@@ -33,7 +33,7 @@ const BrowseAravts = () => {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-8 space-y-8">
+    <div className="w-full max-w-6xl p-2 space-y-8">
       {/* Welcome Message - Only show if user is not in an Aravt */}
       {!(user?.aravts && user.aravts.length > 0) && (
       <Card className="bg-blue-50 border-none p-6">

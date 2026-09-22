@@ -13,7 +13,7 @@ The current local snapshot declares OpenAPI `3.1.0` and API version `0.1.0`.
 ## Base URLs
 
 - Production: `https://backend.aravt.io`
-- Local development default: `http://localhost:8001`
+- Local development default: `http://localhost:5173`
 
 The frontend reads the base URL from `VITE_API_URL` and falls back to the local development URL.
 

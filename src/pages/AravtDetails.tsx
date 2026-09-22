@@ -5,41 +5,71 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { api } from '@/lib/api';
 import { getInitials } from '@/lib/avatarUtils';
+import { safeExternalUrl } from '@/lib/safeUrl';
 import { useAravtsStore } from '@/store/aravts';
 import { useAuthStore } from '@/store/auth';
-import type { AravtDetails as AravtDetailsType, AravtMember, Project } from '@/types';
-import { Users } from 'lucide-react';
+import type { AravtDetails as AravtDetailsType, AravtMember, Project, Skill } from '@/types';
+import { CheckCircle2, ExternalLink, Network, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 const AravtDetails = () => {
   const { id } = useParams<{ id: string }>();
   const [isJoining, setIsJoining] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { fetchAravtDetails, applyToAravt } = useAravtsStore();
+  const { aravts, fetchAravts, fetchAravtDetails, applyToAravt } = useAravtsStore();
   const user = useAuthStore(state => state.user);
   const [aravtDetails, setAravtDetails] = useState<AravtDetailsType | null>(null);
+  const [teamSkills, setTeamSkills] = useState<Skill[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    void fetchAravts();
+  }, [fetchAravts]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
     const loadAravtDetails = async () => {
       if (!id) return;
       setIsLoading(true);
+      setError(null);
+      setTeamSkills([]);
       try {
         const details = await fetchAravtDetails(parseInt(id));
+        if (isCancelled) return;
         setAravtDetails(details);
+
+        const memberResults = await Promise.allSettled(
+          details.team.map(member => api.users_user(member.id)),
+        );
+        if (isCancelled) return;
+
+        const skillsById = new Map<number, Skill>();
+        memberResults.forEach(result => {
+          if (result.status === 'fulfilled') {
+            result.value.skills.forEach(skill => skillsById.set(skill.id, skill));
+          }
+        });
+        setTeamSkills(Array.from(skillsById.values()).sort((a, b) => a.name.localeCompare(b.name)));
       } catch (err) {
+        if (isCancelled) return;
         setError('Failed to load Aravt details');
         console.error(err);
       } finally {
-        setIsLoading(false);
+        if (!isCancelled) setIsLoading(false);
       }
     };
 
-    loadAravtDetails();
+    void loadAravtDetails();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [id, fetchAravtDetails]);
 
   const handleJoinRequestSubmit = async (data: { reason: string }) => {
@@ -70,20 +100,13 @@ const AravtDetails = () => {
   }
 
   const aravtIdNum = id ? parseInt(id) : undefined;
-  const canJoin = !user?.aravts?.some(link => link.aravt.id === (aravtIdNum ?? -1)) && !isJoining;
+  const isMember = user?.aravts?.some(link => link.aravt.id === (aravtIdNum ?? -1)) ?? false;
+  const canJoin = !isMember && !isJoining;
+  const telegramChatUrl = safeExternalUrl(aravtDetails.telegram_chat_link);
+  const childAravts = aravts.filter(aravt => aravt.aravt_father_id === aravtDetails.id);
 
   return (
-    <div className="max-w-6xl mx-auto p-8 space-y-6">
-      <div className="flex items-center gap-4">
-        {canJoin && (
-          <Button 
-            onClick={() => setIsJoining(true)}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Submitting...' : 'Join Aravt'}
-          </Button>
-        )}
-      </div>
+    <div className="max-w-6xl  p-2 space-y-6">
 
       <div className="grid gap-6">
         {/* Basic Info */}
@@ -107,10 +130,20 @@ const AravtDetails = () => {
                     {aravtDetails.is_draft ? 'Draft' : 'Active'}
                   </Badge>
                 </div>
+                {telegramChatUrl && (
+                  <Button asChild variant="outline" size="sm" className="mt-4">
+                    <a href={telegramChatUrl} target="_blank" rel="noopener noreferrer">
+                      Open Telegram chat
+                      <ExternalLink className="ml-2 h-4 w-4" />
+                    </a>
+                  </Button>
+                )}
               </div>
             </div>
           </CardHeader>
         </Card>
+
+        
 
         {/* Leadership */}
         <Card>
@@ -160,23 +193,22 @@ const AravtDetails = () => {
         </Card>
 
         {/* Skills */}
-        {/* TODO: вернуть блок навыков, когда API снова начнет возвращать skills */}
-        {/* {aravtDetails.skills?.length > 0 && (
+        {teamSkills.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle>Skills</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {aravtDetails.skills.map((skill, index) => (
-                  <Badge key={index} variant="secondary">
-                    {skill}
+                {teamSkills.map(skill => (
+                  <Badge key={skill.id} variant="secondary">
+                    {skill.name}
                   </Badge>
                 ))}
               </div>
             </CardContent>
           </Card>
-        )} */}
+        )}
 
         {/* Projects */}
         {(aravtDetails.business ?? []).length > 0 && (
@@ -204,7 +236,7 @@ const AravtDetails = () => {
           </Card>
         )}
 
-        {/* Do not show Offers for unregistered 
+        {/* Offers */}
         {aravtDetails.offers?.length > 0 && (
           <Card>
             <CardHeader>
@@ -221,7 +253,7 @@ const AravtDetails = () => {
                           <p className="text-sm text-gray-500">{offer.description}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold">{offer.price} AT</p>
+                          <p className="font-semibold">${offer.price}</p>
                           {offer.is_limited && (
                             <p className="text-sm text-gray-500">
                               {offer.count_left} remaining
@@ -236,8 +268,81 @@ const AravtDetails = () => {
             </CardContent>
           </Card>
         )}
-        */}
       </div>
+
+      {/* Aravt Hierarchy */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Network className="h-5 w-5" />
+              Hierarchy
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-6 md:grid-cols-2">
+            <div>
+              <h3 className="mb-3 text-sm font-medium text-gray-500">Father Aravt</h3>
+              {aravtDetails.aravt_father ? (
+                <Link
+                  to={`/aravts/${aravtDetails.aravt_father.id}`}
+                  className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-gray-50"
+                >
+                  <span className="font-medium">
+                    {aravtDetails.aravt_father.name} (№{aravtDetails.aravt_father.id})
+                  </span>
+                  <Badge variant={aravtDetails.aravt_father.is_draft ? 'secondary' : 'default'}>
+                    {aravtDetails.aravt_father.is_draft ? 'Draft' : 'Active'}
+                  </Badge>
+                </Link>
+              ) : (
+                <p className="rounded-lg border border-dashed p-4 text-sm text-gray-500">
+                  This is a root Aravt.
+                </p>
+              )}
+            </div>
+
+            <div>
+              <h3 className="mb-3 text-sm font-medium text-gray-500">Child Aravts</h3>
+              {childAravts.length > 0 ? (
+                <div className="grid gap-3">
+                  {childAravts.map(child => (
+                    <Link
+                      key={child.id}
+                      to={`/aravts/${child.id}`}
+                      className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-gray-50"
+                    >
+                      <span className="font-medium">
+                        {child.name} (№{child.id})
+                      </span>
+                      <Badge variant={child.is_draft ? 'secondary' : 'default'}>
+                        {child.is_draft ? 'Draft' : 'Active'}
+                      </Badge>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-lg border border-dashed p-4 text-sm text-gray-500">
+                  No child Aravts.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+      <div className="flex items-center gap-4">
+          {isMember ? (
+            <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-2 text-sm font-medium text-green-700">
+              <CheckCircle2 className="h-4 w-4" />
+              You are already in this Aravt
+            </div>
+          ) : canJoin && (
+            <Button
+              onClick={() => setIsJoining(true)}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Submitting...' : 'Join Aravt'}
+            </Button>
+          )}
+        </div>
 
       {isJoining && (
         <JoinRequestForm 
@@ -250,4 +355,4 @@ const AravtDetails = () => {
   );
 };
 
-export default AravtDetails; 
+export default AravtDetails;

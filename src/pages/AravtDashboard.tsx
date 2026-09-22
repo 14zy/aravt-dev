@@ -89,7 +89,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
           <Button variant="outline" size="sm" onClick={() => navigate(`/offers?projectId=${project.id}`)}>
             Market Offers: {projectOffers.length}
           </Button>
-          <Button variant="ghost" disabled size="sm">Project Tasks</Button>
+          {/* <Button variant="ghost" disabled size="sm">Project Tasks</Button> */}
         </div>
       </CardFooter>
     </Card>

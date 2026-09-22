@@ -48,7 +48,7 @@ export default function Layout() {
     <div className="min-h-screen w-full flex flex-col pb-24">
       {isNeedHeader && (
         <header className="bg-white shadow w-full h-14 navbar sm:h-16">
-          <nav className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
+          <nav className="max-w-7xl w-full  sm:px-6 lg:px-8 h-full flex items-center justify-between">
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center">
                 <div className="flex sm:flex">
