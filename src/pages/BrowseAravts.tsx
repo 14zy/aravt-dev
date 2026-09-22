@@ -1,20 +1,32 @@
 import AravtCard from '@/components/client/AravtCard';
+import CreateAravtForm from '@/components/client/CreateAravtForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import AravtRadialTree from '@/components/visualizations/AravtRadialTree';
+import useSelectedAravt from '@/hooks/useSelectedAravt';
 import { useAravtsStore } from '@/store/aravts';
 import { useAuthStore } from '@/store/auth';
-import { List, Network, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Link, List, Network, Plus, Search } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 const BrowseAravts = () => {
   const { aravts, isLoading, error, fetchAravts } = useAravtsStore();
   const user = useAuthStore(state => state.user);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'tree'>('list');
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const { currentAravtId } = useSelectedAravt();
+
+  const canCreateAravt = useMemo((): boolean => {
+    if (!user?.aravts || user.aravts.length === 0) return false;
+    if (currentAravtId) {
+      return user.aravts.some(link => link.aravt.id === currentAravtId && link.able_to_create_aravt);
+    }
+    return user.aravts.some(link => link.able_to_create_aravt);
+  }, [user?.aravts, currentAravtId]);
 
   useEffect(() => {
     fetchAravts();
@@ -103,17 +115,20 @@ const BrowseAravts = () => {
         </Card>
       )}
       </div>
-      
 
+      {canCreateAravt && (
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={() => setIsFormOpen(true)}
+          className="w-full rounded-2xl border-dashed py-6 text-slate-600"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Create New Aravt
+        </Button>
+      )}
 
-      
-      <a
-      href="/learn"
-      className="inline-block text-blue-600 hover:underline font-medium"
-      >
-      Learn more
-      </a>
-
+      {isFormOpen && <CreateAravtForm onClose={() => setIsFormOpen(false)} />}
 
     </div>
   );

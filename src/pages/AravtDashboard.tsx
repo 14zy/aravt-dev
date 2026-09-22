@@ -1,6 +1,5 @@
 import { MemberCard } from '@/components/admin/MemberCard';
 import { RequestCard } from '@/components/admin/RequestCard';
-import CreateAravtForm from '@/components/client/CreateAravtForm';
 import { CreateProjectDialog } from '@/components/client/CreateProjectDialog';
 import { TaskCard } from '@/components/client/TaskCard';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -100,7 +99,6 @@ const AravtDashboard = () => {
   const { stats, isLoading: dashboardLoading, error: dashboardError, fetchDashboardData } = useDashboardStore();
   const { aravtDetails, isLoading: aravtLoading } = useAravtsStore();
   const user = useAuthStore(state => state.user);
-  const [isFormOpen, setIsFormOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [isInviting, setIsInviting] = useState(false);
@@ -136,14 +134,6 @@ const AravtDashboard = () => {
     const parsed = Number(params.aravtId);
     return Number.isFinite(parsed) ? parsed : undefined;
   }, [params.aravtId]);
-
-  const canCreateAravt = useMemo((): boolean => {
-    if (!user?.aravts || user.aravts.length === 0) return false;
-    if (currentAravtId) {
-      return user.aravts.some(link => link.aravt.id === currentAravtId && link.able_to_create_aravt);
-    }
-    return user.aravts.some(link => link.able_to_create_aravt);
-  }, [user?.aravts, currentAravtId]);
 
   const isLeader = useMemo(() => isUserLeaderOfAravt(user, currentAravtId), [user, currentAravtId]);
 
@@ -725,19 +715,6 @@ const AravtDashboard = () => {
         )}
       </section>
 
-      {canCreateAravt && (
-        <Button 
-          variant="outline" 
-          size="lg" 
-          onClick={() => setIsFormOpen(true)}
-          className="w-full rounded-2xl border-dashed py-6 text-slate-600"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Create New Aravt
-        </Button>
-      )}
-
-      {isFormOpen && <CreateAravtForm onClose={() => setIsFormOpen(false)} />}
     </div>
   );
 };

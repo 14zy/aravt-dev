@@ -217,54 +217,6 @@ const Profile = () => {
         </Button>
       </div>
 
-      {/* Aravt Info */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>My Aravt</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {user?.aravts && user.aravts.length > 0 ? (
-            <div className="space-y-3">
-              {aravtOptions.length > 1 && (
-                <div>
-                  <label className="text-sm text-muted-foreground">Select Aravt</label>
-                  <Select value={currentAravtId?.toString() ?? ''} onValueChange={(v) => {
-                    const id = Number(v)
-                    setCurrentAravtId(id)
-                  }}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Choose aravt" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {aravtOptions.map(opt => (
-                        <SelectItem key={opt.id} value={opt.id.toString()}>{opt.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              <div className="p-4 border rounded-lg">
-                <p className="font-medium">🌀 {selectedAravtLink?.aravt.name ?? `Aravt #${selectedAravtLink?.aravt.id}`} (№{selectedAravtLink?.aravt.id})</p>
-                <p className="text-sm text-gray-500">{selectedAravtLink?.aravt.is_draft ? 'Draft' : 'Active'}</p>
-              </div>
-
-              <Button asChild className="w-full" disabled={!currentAravtId}>
-                <Link to={`/dashboard/${currentAravtId || ''}`}>Open Dashboard</Link>
-              </Button>
-              <Button asChild className="w-full">
-                <Link to="https://t.me/share/url?url=https://aravt.io/">Share app</Link>
-              </Button>
-              {/* <Button variant="outline" asChild className="w-full">
-                <Link to="#">Leave Aravt</Link>
-              </Button> */}
-            </div>
-          ) : (
-            <p className="text-gray-500">Not a member of any Aravt</p>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Skills Section */}
       <Card className="mt-4">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -342,6 +294,60 @@ const Profile = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Aravt Info */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>My Aravt</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {user?.aravts && user.aravts.length > 0 ? (
+            <div className="space-y-3">
+              {aravtOptions.length > 1 && (
+                <div>
+                  <label className="text-sm text-muted-foreground">Select Aravt</label>
+                  <Select value={currentAravtId?.toString() ?? ''} onValueChange={(v) => {
+                    const id = Number(v)
+                    setCurrentAravtId(id)
+                  }}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Choose aravt" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {aravtOptions.map(opt => (
+                        <SelectItem key={opt.id} value={opt.id.toString()}>{opt.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="p-4 border rounded-lg">
+                <p className="font-medium">🌀 {selectedAravtLink?.aravt.name ?? `Aravt #${selectedAravtLink?.aravt.id}`} (№{selectedAravtLink?.aravt.id})</p>
+                <p className="text-sm text-gray-500">{selectedAravtLink?.aravt.is_draft ? 'Draft' : 'Active'}</p>
+              </div>
+
+              <Button asChild className="w-full" disabled={!currentAravtId}>
+                <Link to={`/dashboard/${currentAravtId || ''}`}>Go to Dashboard</Link>
+              </Button>
+
+              <Button asChild className="w-full">
+                <Link to="https://t.me/share/url?url=https://aravt.io/">Share app</Link>
+              </Button>
+              
+            </div>
+          ) : (
+            <p className="text-gray-500">Not a member of any Aravt</p>
+          )}
+
+          {/* <Button variant="outline" asChild className="w-full">
+            <Link to="#">Leave Aravt</Link>
+          </Button> */}
+        </CardContent>
+      </Card>
+      
+
+      
   
       {<div className="mt-4 pt-4 mb-4">
         <h3 className="text-md font-semibold mb-2">Requests</h3>
