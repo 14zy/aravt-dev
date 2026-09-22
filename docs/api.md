@@ -1,188 +1,121 @@
-# Aravt API Documentation
+# Aravt API Guide
 
-## API Information
-- **Current Version**: v1
-- **Content-Type**: application/json
-- **Accept**: application/json
+This document is a human-readable entry point to the Aravt API. It does not duplicate the complete endpoint reference. The OpenAPI schema is the source of truth for paths, methods, parameters, request bodies, and documented responses.
 
-## Base URL
-`https://aravt-backend.fly.dev/`
+## API Reference
+
+- [Interactive Swagger UI](https://backend.aravt.io/docs)
+- [Live OpenAPI schema](https://backend.aravt.io/openapi.json)
+- [Local OpenAPI snapshot](openapi.json)
+
+The current local snapshot declares OpenAPI `3.1.0` and API version `0.1.0`.
+
+## Base URLs
+
+- Production: `https://backend.aravt.io`
+- Local development default: `http://localhost:8001`
+
+The frontend reads the base URL from `VITE_API_URL` and falls back to the local development URL.
 
 ## Authentication
-All API endpoints require authentication using a Bearer token in the Authorization header:
-```
-Authorization: Bearer <your_token>
-```
 
-## Endpoints
+The frontend obtains an access token from `POST /login/` and sends it on authenticated requests:
 
-### Application For Membership
-
-#### Create Application
-- **Method**: POST
-- **Endpoint**: `/application-for-membership`
-- **Description**: Submit a new membership application
-
-**Request Body**:
-```typescript
-{
-  firstName: string;
-  lastName: string;
-  registrationNumber: string;
-  phoneNumber: string;
-  email: string;
-  birthDate: string; // Format: YYYY-MM-DD
-  address: {
-    city: string;
-    district: string;
-    khoroo: string;
-    apartment: string;
-  };
-  workplace: {
-    name: string;
-    position: string;
-  };
-  education: {
-    degree: string;
-    major: string;
-    university: string;
-    graduationYear: number;
-  };
-  membershipType: "STANDARD" | "STUDENT";
-  isAgreedToTerms: boolean;
-}
+```http
+Authorization: Bearer <access_token>
 ```
 
-**Response**:
-```typescript
-{
-  id: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
-  createdAt: string;
-  updatedAt: string;
-  // ... all submitted fields
-}
-```
+Login, registration, registration completion, and password-reset flows must be accessible before authentication. Consult the backend implementation when changing authorization rules because the current OpenAPI schema does not declare a security scheme or per-operation security requirements.
 
-#### Get Application Status
-- **Method**: GET
-- **Endpoint**: `/application-for-membership/{id}`
-- **Description**: Retrieve the status of a submitted application
+## Request Formats
 
-**Response**:
-```typescript
-{
-  id: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
-  createdAt: string;
-  updatedAt: string;
-  // ... all application fields
-}
-```
+Most request bodies use JSON:
 
-### Error Responses
-All endpoints may return the following error responses:
-```typescript
-{
-  statusCode: number;
-  message: string;
-  error: string;
-}
-```
-
-Common Status Codes:
-- `400`: Bad Request
-- `401`: Unauthorized
-- `403`: Forbidden
-- `404`: Not Found
-- `500`: Internal Server Error
-
-### Common Headers
-**Request Headers**:
-```
+```http
 Content-Type: application/json
 Accept: application/json
-Authorization: Bearer <your_token>
 ```
 
-**Response Headers**:
-```
-Content-Type: application/json
-X-Request-ID: <request_id>
-X-RateLimit-Limit: <limit>
-X-RateLimit-Remaining: <remaining>
-X-RateLimit-Reset: <reset_timestamp>
+Avatar upload at `POST /users/user/{user_id}/avatar` uses `multipart/form-data` instead.
+
+Use path names exactly as published in the OpenAPI schema, including trailing slashes where present.
+
+## API Areas
+
+The schema groups operations into these tags:
+
+- **Auth** — registration, login, password reset, identity, and account linking
+- **Users** — users, subscriptions, and skills
+- **Aravts** — Aravts, membership applications, and invitations
+- **Tasks** — tasks and completions
+- **Offers** — offers
+- **Logs** — operation logs
+- **Admin** — administrative and service operations
+
+Use Swagger UI or `docs/openapi.json` for the complete operation list and data models.
+
+## Examples
+
+### Log In
+
+```bash
+curl --request POST \
+  --url https://backend.aravt.io/login/ \
+  --header 'Content-Type: application/json' \
+  --data '{"username":"example","password":"example"}'
 ```
 
-### Rate Limiting
-- Rate limit: 100 requests per minute
-- When exceeded, returns 429 Too Many Requests
-- Reset time provided in X-RateLimit-Reset header
+### Get the Current User
 
-### Detailed Error Responses
+```bash
+curl --request GET \
+  --url https://backend.aravt.io/who_am_i \
+  --header 'Authorization: Bearer <access_token>'
+```
+
+### Apply to Join an Aravt
+
+```bash
+curl --request POST \
+  --url https://backend.aravt.io/aravt/123/join \
+  --header 'Authorization: Bearer <access_token>' \
+  --header 'Content-Type: application/json' \
+  --data '{"text":"I would like to join."}'
+```
+
+## Validation Errors
+
+The OpenAPI schema documents FastAPI validation failures as HTTP `422` responses:
+
 ```typescript
-{
-  statusCode: number;
-  message: string;
-  error: string;
-  details?: {
-    field?: string;
-    code?: string;
-    message?: string;
-  }[];
-}
+type HTTPValidationError = {
+  detail?: Array<{
+    loc: Array<string | number>;
+    msg: string;
+    type: string;
+  }>;
+};
 ```
 
-Common Error Codes:
-- `400`: Bad Request
-  - `INVALID_INPUT`: Input validation failed
-  - `DUPLICATE_ENTRY`: Resource already exists
-- `401`: Unauthorized
-  - `INVALID_TOKEN`: Authentication token is invalid
-  - `EXPIRED_TOKEN`: Authentication token has expired
-- `403`: Forbidden
-  - `INSUFFICIENT_PERMISSIONS`: User lacks required permissions
-- `404`: Not Found
-  - `RESOURCE_NOT_FOUND`: Requested resource does not exist
-- `429`: Too Many Requests
-  - `RATE_LIMIT_EXCEEDED`: API rate limit exceeded
-- `500`: Internal Server Error
-  - `INTERNAL_ERROR`: Unexpected server error
+Other runtime error responses may occur even when they are not described in the current schema. Client code must handle non-successful HTTP statuses defensively.
 
-## Pagination
-For endpoints that return lists, pagination is supported using the following query parameters:
-```
-?page=1&limit=10
+## Refreshing the Local Schema
+
+Refresh the snapshot whenever the backend contract changes:
+
+```bash
+curl -fsSL https://backend.aravt.io/openapi.json -o docs/openapi.json
+jq empty docs/openapi.json
 ```
 
-Response includes pagination metadata:
-```typescript
-{
-  data: T[];
-  metadata: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  }
-}
-```
+Review the resulting diff before committing it. Do not manually copy the full endpoint catalog into this file; update the backend OpenAPI definitions and refresh the snapshot instead.
 
-## API Status
-- **Method**: GET
-- **Endpoint**: `/health`
-- **Description**: Check API health status
+## Current Schema Limitations
 
-**Response**:
-```typescript
-{
-  status: "healthy" | "degraded" | "maintenance";
-  version: string;
-  timestamp: string;
-}
-```
+The published schema currently has several documentation gaps:
 
-## Changelog
-### v1.0.0 (YYYY-MM-DD)
-- Initial API release
-- Implemented Application For Membership endpoints
+- It does not define an OpenAPI security scheme or identify protected operations.
+- Several successful responses use an empty schema, so their response bodies are not machine-readable.
+- It primarily documents `200` and `422` responses and does not comprehensively describe authentication, authorization, or server-error responses.
+
+Treat these as backend documentation gaps rather than inventing contracts in this guide.

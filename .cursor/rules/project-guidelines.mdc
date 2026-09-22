@@ -2,73 +2,73 @@
 alwaysApply: true
 ---
 
-# Руководство по проекту
+# Project Guidelines
 
-Этот проект использует современный стек: React + TypeScript, React Router v6, Shadcn UI, Tailwind CSS и Zustand. Цель — писать чистый, читаемый, типобезопасный код с упором на осмысленные имена, простую архитектуру и производительность.
+This project uses a modern stack: React, TypeScript, React Router v6, Shadcn UI, Tailwind CSS, and Zustand. The goal is to write clean, readable, type-safe code with an emphasis on meaningful names, simple architecture, and performance.
 
-Ключевые точки входа и директории:
+Key entry points and directories:
 
-- [src/main.tsx](mdc:src/main.tsx) — инициализация приложения
-- [src/routes/index.tsx](mdc:src/routes/index.tsx) — маршрутизация (React Router v6)
-- [src/App.tsx](mdc:src/App.tsx) — корневой компонент
-- [src/components/ui/button.tsx](mdc:src/components/ui/button.tsx) — UI-примитивы (Shadcn UI)
-- [src/lib/api.ts](mdc:src/lib/api.ts) — API-вызовы
-- [src/store/auth.ts](mdc:src/store/auth.ts) — Zustand сто́ры (пример)
+- [src/main.tsx](mdc:src/main.tsx) — application initialization
+- [src/routes/index.tsx](mdc:src/routes/index.tsx) — routing (React Router v6)
+- [src/App.tsx](mdc:src/App.tsx) — root component
+- [src/components/ui/button.tsx](mdc:src/components/ui/button.tsx) — UI primitives (Shadcn UI)
+- [src/lib/api.ts](mdc:src/lib/api.ts) — API calls
+- [src/store/auth.ts](mdc:src/store/auth.ts) — Zustand stores (example)
 
-Общие принципы кода:
+General coding principles:
 
-- Пишите полный, рабочий код; избегайте неполных реализаций и заглушек
-- Используйте осмысленные имена: функции — глаголы/фразы-действия, переменные — существительные/фразы-сущности
-- Предпочитайте ранние возвраты и неглубокую вложенность (≤2–3 уровня)
-- Ошибки обрабатывайте осмысленно; не глушите исключения
-- Держите компоненты «чистыми»: побочные эффекты — в хуках, бизнес-логика — в сторах/сервисах
+- Write complete, working code; avoid incomplete implementations and placeholders
+- Use meaningful names: verbs or action phrases for functions, and nouns or entity phrases for variables
+- Prefer early returns and shallow nesting (no more than 2–3 levels)
+- Handle errors meaningfully; do not suppress exceptions
+- Keep components pure: place side effects in hooks and business logic in stores or services
 
-TypeScript и архитектура:
+TypeScript and architecture:
 
-- Экспортируемые функции/компоненты должны иметь явные сигнатуры типов
-- Избегайте any/unknown без необходимости; не используйте небезопасные приведения
-- Общие утилиты — в [src/lib](mdc:src/lib), переиспользуемые компоненты — в [src/components](mdc:src/components), страницы — в [src/pages](mdc:src/pages)
-- Состояние храните в Zustand сторах в [src/store](mdc:src/store); локальный UI-стейт — в компонентах
+- Exported functions and components must have explicit type signatures
+- Avoid `any` and `unknown` unless necessary; do not use unsafe type assertions
+- Place shared utilities in [src/lib](mdc:src/lib), reusable components in [src/components](mdc:src/components), and pages in [src/pages](mdc:src/pages)
+- Keep application state in Zustand stores under [src/store](mdc:src/store), and local UI state in components
 
-UI и стили:
+UI and styling:
 
-- Используйте Tailwind утилиты для стилей, Shadcn UI компоненты как основу
-- Не переизобретайте UI-примитивы — добавляйте новые в [src/components/ui](mdc:src/components/ui) при необходимости
+- Use Tailwind utility classes for styling and Shadcn UI components as the foundation
+- Do not reinvent UI primitives; add new ones to [src/components/ui](mdc:src/components/ui) when necessary
 
-Маршрутизация:
+Routing:
 
-- Новые страницы регистрируйте в [src/routes/index.tsx](mdc:src/routes/index.tsx); соблюдайте паттерны React Router v6
+- Register new pages in [src/routes/index.tsx](mdc:src/routes/index.tsx) and follow React Router v6 patterns
 
-Производительность:
+Performance:
 
-- Мемоизируйте тяжёлые вычисления/рендеры (useMemo/useCallback)
-- Избегайте лишних ререндеров за счёт правильной структуры стора и селекторов
+- Memoize expensive computations and renders with `useMemo` and `useCallback`
+- Avoid unnecessary re-renders by structuring stores and selectors appropriately
 
-## Конвенция коммитов (Conventional Commits)
+## Commit Convention (Conventional Commits)
 
-Используйте формат: `<type>(<scope>): <subject>`
+Use the following format: `<type>(<scope>): <subject>`
 
-- `feat`: новая функциональность
-- `fix`: исправление бага
-- `docs`: документация (README, правила, спецификации)
-- `style`: правки без изменения логики (форматирование, пробелы)
-- `refactor`: переработка без изменения поведения
-- `perf`: оптимизация производительности
-- `test`: тесты
-- `build`: сборка, инструменты сборки, конфиги
+- `feat`: new functionality
+- `fix`: bug fix
+- `docs`: documentation (README files, rules, specifications)
+- `style`: changes that do not affect logic (formatting, whitespace)
+- `refactor`: code changes that do not alter behavior
+- `perf`: performance improvements
+- `test`: tests
+- `build`: build system, build tools, and configuration
 - `ci`: CI/CD
-- `chore`: прочие задачи (например, обновление зависимостей)
-- `revert`: откат изменений
+- `chore`: other tasks, such as dependency updates
+- `revert`: revert previous changes
 
-Рекомендуемые `scope`: `deps`, `cursor`, `ui`, `store`, `routes`, `admin`, `hooks`, `types`, `build`.
+Recommended scopes: `deps`, `cursor`, `ui`, `store`, `routes`, `admin`, `hooks`, `types`, and `build`.
 
-Примеры:
+Examples:
 
 - `chore(deps): npm audit fix`
 - `docs(cursor): add project guidelines and TS/React style rules`
 
-Короткая форма в одну строку (менее канонично, допустимо для мелких задач):
+Short single-line form (less conventional, but acceptable for small tasks):
 
-- Разрешается объединять несколько коротких изменений в один заголовок, разделяя `;`.
-- Пример: `chore(deps): npm audit fix; docs(cursor): add Cursor rules`
-- Предпочтительно разбивать на отдельные коммиты по типам.
+- Multiple small changes may be combined in one subject line, separated by `;`.
+- Example: `chore(deps): npm audit fix; docs(cursor): add Cursor rules`
+- Prefer separate commits for different change types.

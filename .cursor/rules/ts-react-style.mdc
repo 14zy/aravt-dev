@@ -2,35 +2,35 @@
 globs: *.ts,*.tsx
 ---
 
-# Стиль и практики для TypeScript/React
+# TypeScript and React Style Guide
 
-Общее
+General
 
-- Всегда используйте явные проп-типизации для компонентов и экспортируемых функций
-- Не используйте any; предпочитайте точные типы и дженерики
-- Именование: функции — глаголы, переменные — осмысленные существительные
+- Always define explicit prop types for components and type signatures for exported functions
+- Do not use `any`; prefer precise types and generics
+- Naming: use verbs for functions and meaningful nouns for variables
 
-Компоненты
+Components
 
-- Функциональные компоненты с явными проп-типами: `type Props = { ... }`
-- Внутренний UI-стейт в компоненте; бизнес-стейт — в Zustand сторах
-- Хуки: побочные эффекты в `useEffect`, мемоизация в `useMemo`/`useCallback`
+- Use function components with explicit prop types: `type Props = { ... }`
+- Keep internal UI state in the component and business state in Zustand stores
+- Hooks: use `useEffect` for side effects and `useMemo` or `useCallback` for memoization
 
-Загрузка данных
+Data fetching
 
-- Вызовы API из сервисов [src/lib](mdc:src/lib) или стора; не из компонентов страниц напрямую
-- Обрабатывайте ошибки и состояния загрузки; показывайте `LoadingSpinner` из [src/components/ui/LoadingSpinner.tsx](mdc:src/components/ui/LoadingSpinner.tsx)
+- Make API calls from services in [src/lib](mdc:src/lib) or from stores, not directly from page components
+- Handle errors and loading states; display `LoadingSpinner` from [src/components/ui/LoadingSpinner.tsx](mdc:src/components/ui/LoadingSpinner.tsx)
 
-UI/стили
+UI and styling
 
-- Tailwind классы и Shadcn UI компоненты из [src/components/ui](mdc:src/components/ui)
-- Не инлайньте большие блоки стилей; выносите в классы/утилиты
+- Use Tailwind classes and Shadcn UI components from [src/components/ui](mdc:src/components/ui)
+- Do not inline large style blocks; extract them into classes or utilities
 
-Маршрутизация
+Routing
 
-- Используйте React Router v6; маршруты настраивайте в [src/routes/index.tsx](mdc:src/routes/index.tsx)
+- Use React Router v6 and configure routes in [src/routes/index.tsx](mdc:src/routes/index.tsx)
 
-Тестируемость и поддерживаемость
+Testability and maintainability
 
-- Избегайте глубокой вложенности; применяйте ранние возвраты
-- Выделяйте утилиты и повторяемую логику в отдельные функции/хуки
+- Avoid deep nesting and use early returns
+- Extract utilities and repeated logic into separate functions or hooks

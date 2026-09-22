@@ -68,3 +68,12 @@ Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before openin
 ## License
 
 Licensed under the [MIT License](LICENSE).
+
+## Whitepaper
+
+https://docs.google.com/document/d/15ZrMssFJ4-qx8f6sZs1qY1BpR1Oh0UDSG0O1M3pR0GQ/edit?usp=sharing
+
+
+## Official website
+
+Visit Aravt.io to understand the project, read the whitepaper, and find links to the official app and social media channels.

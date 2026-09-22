@@ -1,67 +1,67 @@
-# Stale‑While‑Revalidate (SWR) в проекте
+# Stale-While-Revalidate (SWR) in the Project
 
-Цели:
-- Мгновенно отдавать кэшированные данные в UI
-- Обновлять данные в фоне без мерцаний
-- Исключить дублирующиеся параллельные запросы
-- Единый подход во всех сторах
+Goals:
+- Return cached data to the UI immediately
+- Refresh data in the background without flickering
+- Prevent duplicate concurrent requests
+- Use a consistent approach across all stores
 
-## Как это работает
+## How It Works
 
-`src/lib/swrCache.ts` содержит две утилиты:
-- `shouldRevalidate(fetchedAt, ttlMs)` — решает, пора ли фонового обновления. Проверка выполняется **только в момент вызова метода стора**, поэтому нужен повторный вызов (вручную или через таймер).
-- `dedupe(key, fetcher)` — дедупликация параллельных запросов по ключу, чтобы при множественных вызовах не плодились одинаковые HTTP-запросы.
+`src/lib/swrCache.ts` contains two utilities:
+- `shouldRevalidate(fetchedAt, ttlMs)` — determines whether a background refresh is due. The check runs **only when the store method is called**, so another call is required, either manually or through a timer.
+- `dedupe(key, fetcher)` — deduplicates concurrent requests by key so that repeated calls do not create identical HTTP requests.
 
-Алгоритм в сторах (пример — `useUserStore`):
-1. Держим `data`, `fetchedAt` и индикаторы загрузки.
-2. При вызове `fetchX({ force, ttlMs })`:
-   - Если `data` уже есть — сразу возвращаем её в компонент (никаких спиннеров).
-   - Если `force===true` или `shouldRevalidate(...)` вернул `true`, через `dedupe` запускаем фоновой `fetch`.
-   - Если данных нет, работаем в «обычном» режиме с `isLoading=true`.
+Store algorithm (`useUserStore` is used as an example):
+1. Keep `data`, `fetchedAt`, and loading indicators in the store.
+2. When `fetchX({ force, ttlMs })` is called:
+   - If `data` is already available, return it to the component immediately without displaying a spinner.
+   - If `force === true` or `shouldRevalidate(...)` returns `true`, start a background `fetch` through `dedupe`.
+   - If no data is available, use the standard flow with `isLoading = true`.
 
-По умолчанию `ttlMs=0`, поэтому **любой** повторный вызов метода при наличии кеша мгновенно отдаст старые данные и тут же инициирует фоновой запрос. Если нужен более редкий рефреш, передавайте `ttlMs` вручную.
+By default, `ttlMs = 0`. Therefore, **every** subsequent method call made while cached data is available returns the stale data immediately and starts a background request. To refresh less frequently, pass `ttlMs` explicitly.
 
-Переменные окружения:
-- `VITE_DISABLE_CACHE=true` — полностью отключает SWR-путь и всегда ходит в API с индикатором загрузки.
-- Других env-переменных для SWR нет — фоновые обновления управляются только повторными вызовами методов стора.
+Environment variables:
+- `VITE_DISABLE_CACHE=true` — disables the SWR flow entirely and always calls the API while displaying a loading indicator.
+- There are no other environment variables for SWR. Background refreshes are triggered only by subsequent calls to store methods.
 
-## Примеры
+## Examples
 
-### Профиль пользователя
+### User Profile
 ```ts
 const { fetchUserProfile } = useUserStore.getState();
-await fetchUserProfile(); // вернет кеш + запустит фон
-await fetchUserProfile({ force: true }); // игнорирует кеш
+await fetchUserProfile(); // Returns cached data and starts a background refresh
+await fetchUserProfile({ force: true }); // Ignores the cache
 ```
 
-### Навыки пользователя
+### User Skills
 ```ts
 const { fetchAvailableSkills } = useUserStore.getState();
-await fetchAvailableSkills({ ttlMs: 60_000 }); // фон после минутного TTL
+await fetchAvailableSkills({ ttlMs: 60_000 }); // Refreshes in the background after a one-minute TTL
 ```
 
-### Детали аравта
+### Aravt Details
 ```ts
 const { fetchAravtDetails } = useAravtsStore.getState();
-await fetchAravtDetails(aravtId); // вернет из кэша или обновит в фоне
+await fetchAravtDetails(aravtId); // Returns cached data or refreshes it in the background
 ```
 
-### Auth-store
+### Auth Store
 ```ts
 const { fetchUser } = useAuthStore.getState();
-await fetchUser(); // отдаст закешированного user и запустит SWR-обновление
-await fetchUser({ force: true }); // принудительный запрос профиля
+await fetchUser(); // Returns the cached user and starts an SWR refresh
+await fetchUser({ force: true }); // Forces a profile request
 ```
 
-## Как проверить, что фон работает
+## How to Verify That Background Refreshing Works
 
-1. Проверьте `.env`: `VITE_DISABLE_CACHE` не должен быть `true`.
-2. Откройте `/dashboard/:id`, дождитесь первого ответа (холодный запрос).
-3. Перезагрузите страницу или переключитесь на другой ардавт — `useSelectedAravt` снова вызовет `fetchAravtDetails`, который мгновенно отдаст кеш и почти сразу запустит фоновой запрос `/aravt/:id`.
-4. Для auth-store достаточно любого визита при наличии токена: `App` вызовет `fetchUser()`, Network покажет один `/users/user/:id`, но UI останется на кешированных данных. Принудительный тест — выполнить `useAuthStore.getState().fetchUser({ force: true })` в DevTools.
-5. Чтобы вручную увидеть SWR в других сторах, повторно вызовите `fetchX()` (перейдите на `/profile` дважды или вызовите `fetchUserProfile({ force: true })` в DevTools) — второй вызов отдаст кеш и параллельно отправит запрос.
+1. Check `.env`: `VITE_DISABLE_CACHE` must not be set to `true`.
+2. Open `/dashboard/:id` and wait for the first response (a cold request).
+3. Reload the page or switch to another Aravt. `useSelectedAravt` will call `fetchAravtDetails` again, which immediately returns cached data and then starts a background request to `/aravt/:id`.
+4. For the auth store, any visit with a valid token is sufficient: `App` calls `fetchUser()`, and the Network panel shows one request to `/users/user/:id`, while the UI continues to display cached data. To force a test, run `useAuthStore.getState().fetchUser({ force: true })` in DevTools.
+5. To observe SWR manually in other stores, call `fetchX()` again. For example, visit `/profile` twice or run `fetchUserProfile({ force: true })` in DevTools. The second call returns cached data and sends a request concurrently.
 
-Если фоновых запросов нет:
-- Убедитесь, что кэш не отключён (`VITE_DISABLE_CACHE`).
-- Проверьте, что компонент действительно повторно вызывает метод стора (таймер, пользовательское действие, переход между страницами).
-- Посмотрите логи в консоли: все SWR-ветки логируют ошибки вида `SWR refresh ... failed`.
+If there are no background requests:
+- Make sure caching is not disabled (`VITE_DISABLE_CACHE`).
+- Verify that the component actually calls the store method again, such as through a timer, a user action, or navigation between pages.
+- Check the console logs. All SWR branches log errors in the form `SWR refresh ... failed`.

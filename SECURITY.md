@@ -1,8 +1,4 @@
-# Security policy
-
-## Supported versions
-
-Security fixes are applied to the latest commit on the default branch. This project has not yet published stable versioned releases.
+# Aravt Security policy
 
 ## Reporting a vulnerability
 
@@ -16,6 +12,12 @@ Include affected paths or versions, reproduction steps, impact, and any suggeste
 
 Maintainers should enable **Private vulnerability reporting** in the repository's GitHub security settings before making the repository public.
 
+Also you can email to support@aravt.io
+
 ## Secrets
 
 Values prefixed with `VITE_` are delivered to browsers and must never be treated as secrets. Server credentials belong in the backend's secret manager, not in this repository or its GitHub Actions variables unless a workflow explicitly needs them.
+
+## Gerege NFT
+
+Never give your Gerege NFT to other people it can be used to access your aravt management. 
