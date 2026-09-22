@@ -133,7 +133,7 @@ const Profile = () => {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow">
+    <div className="  p-4 bg-white rounded-lg shadow">
       <h2 className="text-2xl font-bold mb-4">My Profile</h2>
       
       {/* Avatar Section */}
@@ -223,7 +223,7 @@ const Profile = () => {
           <CardTitle>Skills</CardTitle>
           <Dialog open={isAddingSkill} onOpenChange={setIsAddingSkill}>
             <DialogTrigger asChild>
-              <Button variant="outline" disabled size="sm">Add Skill</Button>
+              <Button variant="outline" size="sm">Add Skill</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
