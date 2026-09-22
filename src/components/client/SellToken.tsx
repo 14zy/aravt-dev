@@ -49,7 +49,7 @@ const SellToken: React.FC = () => {
         try {
             setIsSubmitting(true);
             if (Number(amount) < 0.2) {
-                setError('Minimum amount is 0.2 TON');
+                setError('Minimum amount is 0.2 GRAM');
                 return;
             }
             await sell.send(
@@ -77,7 +77,7 @@ const SellToken: React.FC = () => {
             {success && <p className="mb-3 rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{success}</p>}
             <form onSubmit={handleSubmit} className="space-y-3">
                 <label className="block rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                    <span className="flex items-center justify-between text-xs text-slate-500"><span>You pay</span><span>TON</span></span>
+                    <span className="flex items-center justify-between text-xs text-slate-500"><span>You pay</span><span>GRAM</span></span>
                     <Input type="text" inputMode="decimal" name="amount" placeholder="0.00" value={amount} onChange={handleChange} required className="mt-1 h-10 border-0 bg-transparent px-0 text-xl font-semibold shadow-none focus-visible:ring-0" />
                 </label>
                 <div className="mx-auto flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-400"><ArrowDown className="h-3.5 w-3.5" /></div>
@@ -85,7 +85,7 @@ const SellToken: React.FC = () => {
                     <span className="flex items-center justify-between text-xs text-slate-500"><span>You receive</span><span>$ARAVT</span></span>
                     <Input type="text" inputMode="decimal" name="tokenAmount" placeholder="0.00" value={tokenAmount} onChange={handleChange2} required className="mt-1 h-10 border-0 bg-transparent px-0 text-xl font-semibold shadow-none focus-visible:ring-0" />
                 </label>
-                <p className="text-center text-[11px] text-slate-400">Minimum 0.2 TON · Rate includes fees</p>
+                <p className="text-center text-[11px] text-slate-400">Minimum 0.2 GRAM · Rate includes fees</p>
                 <Button type="submit" disabled={!connected || isSubmitting} className="w-full rounded-xl">
                     {isSubmitting && <Loader2 className="animate-spin" />}
                     {isSubmitting ? 'Confirming...' : 'Buy $ARAVT'}

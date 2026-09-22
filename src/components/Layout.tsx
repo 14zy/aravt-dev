@@ -1,6 +1,7 @@
 import { useSelectedAravt } from "@/hooks/useSelectedAravt";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth";
+import { TonConnectButton } from "@tonconnect/ui-react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 
 const NavLink = ({
@@ -48,25 +49,24 @@ export default function Layout() {
     <div className="min-h-screen w-full flex flex-col pb-24">
       {isNeedHeader && (
         <header className="bg-white shadow w-full h-14 navbar sm:h-16">
-          <nav className="max-w-7xl w-full  sm:px-6 lg:px-8 h-full flex items-center justify-between">
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center">
-                <div className="flex sm:flex">
-                  {user &&
-                    (hasAravt ? (
-                      <div className="">
-                        <NavLink to="/browse">🌀 Aravts (6)</NavLink>
-                        <NavLink to="/Learn">📚 Learn</NavLink>
-                        {isAdmin && <NavLink to="/admin">Admin</NavLink>}
-                      </div>
-                    ) : (
-                      <div className="flex sm:flex-row">
-                        <NavLink to="/browse">🌀 Aravts</NavLink>
-                        <NavLink to="/Learn">📚 Learn</NavLink>
-                      </div>
-                    ))}
-                </div>
-              </div>
+          <nav className="mx-auto flex h-full w-full max-w-7xl items-center justify-between gap-2 sm:px-6 lg:px-8">
+            <div className="flex min-w-0 items-center">
+              {user &&
+                (hasAravt ? (
+                  <div className="flex">
+                    <NavLink to="/browse">🌀 Aravts (6)</NavLink>
+                    <NavLink to="/Learn">📚 Learn</NavLink>
+                    {isAdmin && <NavLink to="/admin">Admin</NavLink>}
+                  </div>
+                ) : (
+                  <div className="flex">
+                    <NavLink to="/browse">🌀 Aravts</NavLink>
+                    <NavLink to="/Learn">📚 Learn</NavLink>
+                  </div>
+                ))}
+            </div>
+            <div className="">
+              <TonConnectButton style={{ width: '140px' }} />
             </div>
           </nav>
         </header>
@@ -82,7 +82,7 @@ export default function Layout() {
         <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 h-24">
           <div className="h-full flex items-center justify-center gap-4 px-4 max-w-7xl mx-auto w-full">
             {/* Feed */}
-            <NavLink to="/feed">🧭 News</NavLink>
+            <NavLink to="/feed">🧭 Feed</NavLink>
 
             {/* Market */}
             <NavLink to="/offers">🪙 Store</NavLink>

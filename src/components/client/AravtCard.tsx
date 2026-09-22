@@ -96,15 +96,14 @@ const AravtCard = ({ aravt }: AravtCardProps) => {
               )}
 
               {/* Offers */}
-              {detailedAravt?.offers && detailedAravt.offers.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {detailedAravt.offers.map((offer) => (
-                    <div key={offer.id} className="flex items-center gap-1 text-sm bg-green-50 text-green-700 rounded-full px-3 py-0.5">
-                      <Tag className="h-3 w-3 shrink-0" />
-                      <span className="truncate max-w-[180px]">{offer.name}</span>
-                      <span className="text-green-500 font-medium">{offer.price} USD</span>
-                    </div>
-                  ))}
+              {detailedAravt?.offers && (
+                <div className="flex mt-1">
+                  <div className="flex items-center gap-1 text-sm bg-green-50 text-green-700 rounded-full px-3 py-0.5">
+                    <Tag className="h-3 w-3 shrink-0" />
+                    <span className="font-medium">
+                      {detailedAravt.offers.length} {detailedAravt.offers.length === 1 ? 'offer' : 'offers'}
+                    </span>
+                  </div>
                 </div>
               )}
               

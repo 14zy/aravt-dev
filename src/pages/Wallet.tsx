@@ -3,6 +3,23 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useTonConnect } from "@/hooks/useTonConnect";
 import ta from "@/lib/tonapi";
 import { useAuthStore } from "@/store/auth";
@@ -10,13 +27,15 @@ import {
   AccountAddress,
   Action,
   JettonPreview,
+  JettonBalance,
   JettonSwapAction,
   JettonTransferAction,
+  NftItem,
   NftItemTransferAction,
   TonTransferAction,
 } from "@ton-api/client";
-import { TonConnectButton } from "@tonconnect/ui-react";
-import { Address } from "@ton/core";
+import { CHAIN, toUserFriendlyAddress } from "@tonconnect/ui-react";
+import { Address, beginCell, toNano } from "@ton/core";
 import {
   Activity,
   ArrowDownLeft,
@@ -40,6 +59,12 @@ interface AccountInfo {
   lastActivity: number;
   status: string;
 }
+
+const ARAVT_JETTON_ADDRESS = Address.parse("0:d36706f8299d434b89965cdfe07515dd85c88d9dc54c6dca57808ed441e3d822");
+const USDT_JETTON_ADDRESS = Address.parse("0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe");
+
+type SendAsset = "ARAVT" | "USDT" | "GRAM";
+type JettonAsset = Exclude<SendAsset, "GRAM">;
 
 interface DisplayTransaction {
   id: string;
@@ -118,9 +143,6 @@ const processAction = (
   }
 };
 
-const formatAddress = (address: string) =>
-  address.length > 14 ? `${address.slice(0, 7)}…${address.slice(-6)}` : address;
-
 const formatDate = (timestamp: number) =>
   new Intl.DateTimeFormat(undefined, {
     month: "short",
@@ -129,10 +151,45 @@ const formatDate = (timestamp: number) =>
     minute: "2-digit",
   }).format(new Date(timestamp * 1000));
 
+const formatTokenBalance = (balance: bigint, decimals: number) => {
+  if (decimals <= 0) return balance.toLocaleString();
+
+  const divisor = 10n ** BigInt(decimals);
+  const whole = balance / divisor;
+  const fraction = (balance % divisor)
+    .toString()
+    .padStart(decimals, "0")
+    .slice(0, 4)
+    .replace(/0+$/, "");
+
+  return fraction ? `${whole.toLocaleString()}.${fraction}` : whole.toLocaleString();
+};
+
+const parseTokenAmount = (value: string, decimals: number) => {
+  const normalized = value.trim();
+  if (!/^\d+(\.\d+)?$/.test(normalized)) throw new Error("Enter a valid token amount.");
+
+  const [whole, fraction = ""] = normalized.split(".");
+  if (fraction.length > decimals) {
+    throw new Error(`This token supports up to ${decimals} decimal places.`);
+  }
+
+  return (BigInt(whole) * (10n ** BigInt(decimals)))
+    + BigInt(fraction.padEnd(decimals, "0") || "0");
+};
+
+const getNftName = (nft: NftItem) =>
+  typeof nft.metadata?.name === "string" && nft.metadata.name.trim()
+    ? nft.metadata.name
+    : `NFT #${nft.index}`;
+
+const getNftPreview = (nft: NftItem) =>
+  nft.previews?.[nft.previews.length - 1]?.url;
+
 const getTransactionMeta = (transaction: DisplayTransaction) => {
   switch (transaction.type) {
     case "TonTransfer":
-      return { label: "TON transfer", icon: ArrowUpRight, color: "text-violet-600", background: "bg-violet-50" };
+      return { label: "GRAM transfer", icon: ArrowUpRight, color: "text-violet-600", background: "bg-violet-50" };
     case "JettonTransfer":
       return { label: transaction.jetton?.name || "Token transfer", icon: ArrowDownLeft, color: "text-emerald-600", background: "bg-emerald-50" };
     case "NftItemTransfer":
@@ -147,28 +204,46 @@ const getTransactionMeta = (transaction: DisplayTransaction) => {
 const Wallet = () => {
   const user = useAuthStore((state) => state.user);
   const connectWallet = useAuthStore((state) => state.connectWallet);
-  const { connected, account } = useTonConnect();
+  const { connected, account, sender } = useTonConnect();
   const [transactions, setTransactions] = useState<DisplayTransaction[]>([]);
   const [accountInfo, setAccountInfo] = useState<AccountInfo | null>(null);
+  const [aravtBalance, setAravtBalance] = useState<string | null>(null);
+  const [usdtBalance, setUsdtBalance] = useState<string | null>(null);
+  const [jettonHoldings, setJettonHoldings] = useState<Partial<Record<JettonAsset, JettonBalance>>>({});
+  const [nfts, setNfts] = useState<NftItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [receiveOpen, setReceiveOpen] = useState(false);
+  const [recipient, setRecipient] = useState("");
+  const [sendAmount, setSendAmount] = useState("");
+  const [sendAsset, setSendAsset] = useState<SendAsset>("GRAM");
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const autoFetchedAddressRef = useRef<string | null>(null);
-  const requestInFlightRef = useRef(false);
+  const requestAddressRef = useRef<string | null>(null);
+  const activeAddressRef = useRef<string | null>(account?.address ?? null);
+  activeAddressRef.current = account?.address ?? null;
 
   const fetchWalletData = useCallback(async () => {
-    if (!account?.address || requestInFlightRef.current) return;
-    requestInFlightRef.current = true;
+    const address = account?.address;
+    if (!address || requestAddressRef.current === address) return;
+    requestAddressRef.current = address;
     setIsLoading(true);
     setError(null);
 
     try {
-      const parsedAddress = Address.parse(account.address);
-      const [accountResult, historyResult] = await Promise.allSettled([
+      const parsedAddress = Address.parse(address);
+      const [accountResult, historyResult, jettonsResult, nftsResult] = await Promise.allSettled([
         ta.accounts.getAccount(parsedAddress),
         ta.accounts.getAccountEvents(parsedAddress, { limit: 10 }),
+        ta.accounts.getAccountJettonsBalances(parsedAddress),
+        ta.accounts.getAccountNftItems(parsedAddress, { limit: 12 }),
       ]);
+
+      if (activeAddressRef.current !== address) return;
 
       if (accountResult.status === "fulfilled") {
         setAccountInfo({
@@ -186,30 +261,76 @@ const Wallet = () => {
         );
       }
 
-      if (accountResult.status === "rejected" || historyResult.status === "rejected") {
-        const message = accountResult.status === "fulfilled"
-          ? "Balance loaded, but recent activity is temporarily unavailable."
-          : historyResult.status === "fulfilled"
-            ? "Activity loaded, but the current balance is temporarily unavailable."
-            : "TON wallet data is temporarily unavailable. Check your connection or TON API configuration and try again.";
-        setError(message);
+      if (jettonsResult.status === "fulfilled") {
+        const aravtToken = jettonsResult.value.balances.find(
+          ({ jetton }) => jetton.address.equals(ARAVT_JETTON_ADDRESS),
+        );
+        const usdtToken = jettonsResult.value.balances.find(
+          ({ jetton }) => jetton.address.equals(USDT_JETTON_ADDRESS),
+        );
+        setAravtBalance(
+          aravtToken
+            ? formatTokenBalance(aravtToken.balance, aravtToken.jetton.decimals)
+            : "0",
+        );
+        setUsdtBalance(
+          usdtToken
+            ? formatTokenBalance(usdtToken.balance, usdtToken.jetton.decimals)
+            : "0",
+        );
+        setJettonHoldings({
+          ...(aravtToken ? { ARAVT: aravtToken } : {}),
+          ...(usdtToken ? { USDT: usdtToken } : {}),
+        });
+      }
+
+      if (nftsResult.status === "fulfilled") {
+        setNfts(nftsResult.value.nftItems);
+      }
+
+      const unavailableData = [
+        accountResult.status === "rejected" ? "GRAM balance" : null,
+        jettonsResult.status === "rejected" ? "token balances" : null,
+        nftsResult.status === "rejected" ? "NFTs" : null,
+        historyResult.status === "rejected" ? "recent activity" : null,
+      ].filter(Boolean);
+      if (unavailableData.length > 0) {
+        setError(`Some wallet data is temporarily unavailable: ${unavailableData.join(", ")}.`);
       }
     } catch {
-      setError("The wallet address could not be read. Reconnect your wallet and try again.");
+      if (activeAddressRef.current === address) {
+        setError("The wallet address could not be read. Reconnect your wallet and try again.");
+      }
     } finally {
-      requestInFlightRef.current = false;
-      setIsLoading(false);
+      if (requestAddressRef.current === address) requestAddressRef.current = null;
+      if (activeAddressRef.current === address) setIsLoading(false);
     }
   }, [account?.address]);
 
   useEffect(() => {
     if (!connected || !account?.address) {
       autoFetchedAddressRef.current = null;
+      setTransactions([]);
+      setAccountInfo(null);
+      setAravtBalance(null);
+      setUsdtBalance(null);
+      setJettonHoldings({});
+      setNfts([]);
+      setError(null);
+      setIsLoading(false);
+      setSendOpen(false);
+      setReceiveOpen(false);
       return;
     }
 
     if (autoFetchedAddressRef.current === account.address) return;
     autoFetchedAddressRef.current = account.address;
+    setTransactions([]);
+    setAccountInfo(null);
+    setAravtBalance(null);
+    setUsdtBalance(null);
+    setJettonHoldings({});
+    setNfts([]);
     void fetchWalletData();
   }, [account?.address, connected, fetchWalletData]);
 
@@ -219,11 +340,17 @@ const Wallet = () => {
       : "—",
     [accountInfo],
   );
+  const friendlyAddress = useMemo(
+    () => account?.address
+      ? toUserFriendlyAddress(account.address, account.chain === CHAIN.TESTNET)
+      : "",
+    [account?.address, account?.chain],
+  );
   const isLinked = Boolean(account?.address && user?.wallet_address === account.address);
 
   const copyAddress = async () => {
-    if (!account?.address) return;
-    await navigator.clipboard.writeText(account.address);
+    if (!friendlyAddress) return;
+    await navigator.clipboard.writeText(friendlyAddress);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1600);
   };
@@ -241,15 +368,68 @@ const Wallet = () => {
     }
   };
 
+  const sendAssetTransaction = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSendError(null);
+
+    try {
+      if (!account?.address) throw new Error("Connect your wallet before sending an asset.");
+      const destination = Address.parse(recipient.trim());
+      setIsSending(true);
+
+      if (sendAsset === "GRAM") {
+        const value = toNano(sendAmount.trim());
+        if (value <= 0n) throw new Error("Enter an amount greater than 0 GRAM.");
+        await sender.send({ to: destination, value });
+      } else {
+        const holding = jettonHoldings[sendAsset];
+        if (!holding || holding.balance <= 0n) {
+          throw new Error(`This wallet has no ${sendAsset} available to send.`);
+        }
+
+        const tokenAmount = parseTokenAmount(sendAmount, holding.jetton.decimals);
+        if (tokenAmount <= 0n) throw new Error(`Enter an amount greater than 0 ${sendAsset}.`);
+        if (tokenAmount > holding.balance) throw new Error(`Insufficient ${sendAsset} balance.`);
+
+        const responseAddress = Address.parse(account.address);
+        const transferBody = beginCell()
+          .storeUint(0x0f8a7ea5, 32)
+          .storeUint(0, 64)
+          .storeCoins(tokenAmount)
+          .storeAddress(destination)
+          .storeAddress(responseAddress)
+          .storeBit(false)
+          .storeCoins(1n)
+          .storeBit(false)
+          .endCell();
+
+        await sender.send({
+          to: holding.walletAddress.address,
+          value: toNano("0.05"),
+          body: transferBody,
+          bounce: true,
+        });
+      }
+
+      setRecipient("");
+      setSendAmount("");
+      setSendOpen(false);
+      void fetchWalletData();
+    } catch (err) {
+      setSendError(err instanceof Error ? err.message : "The transaction could not be sent.");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-4 sm:px-0 sm:py-6">
-      <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+      <header>
         <div>
           <Badge variant="secondary" className="mb-3 rounded-full px-3 py-1">TON wallet</Badge>
           <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Wallet</h1>
           <p className="mt-2 text-sm text-slate-500">Your balance, Aravt tokens, and recent activity in one place.</p>
         </div>
-        <div className="self-start sm:self-auto"><TonConnectButton /></div>
       </header>
 
       {!connected || !account ? (
@@ -261,7 +441,6 @@ const Wallet = () => {
             </div>
             <h2 className="relative mt-6 text-xl font-bold text-slate-950">Connect your wallet</h2>
             <p className="relative mt-2 max-w-sm text-sm leading-6 text-slate-500">Connect a TON wallet to view your balance, buy Aravt tokens, and see your latest transactions.</p>
-            <div className="relative mt-6"><TonConnectButton /></div>
             <div className="relative mt-5 flex items-center gap-2 text-xs text-slate-400"><ShieldCheck className="h-4 w-4" /> Your keys always stay in your wallet.</div>
           </CardContent>
         </Card>
@@ -286,21 +465,117 @@ const Wallet = () => {
                   </Button>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">Available balance</p>
-                  <div className="mt-2 flex items-baseline gap-2"><span className="text-4xl font-bold tracking-tight sm:text-5xl">{balance}</span><span className="text-lg font-semibold text-slate-400">TON</span></div>
+                  <p className="text-sm text-slate-400">Available balances</p>
+                  <div className="mt-3 w-full max-w-md divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/5 px-4">
+                    <div className="flex items-center justify-between gap-4 py-3">
+                      <span className="text-sm font-medium text-slate-300">Aravt</span>
+                      <div className="flex min-w-0 items-baseline gap-2">
+                        <span className="truncate text-xl font-bold tracking-tight">{aravtBalance ?? "—"}</span>
+                        <span className="text-xs font-semibold text-violet-300">ARAVT</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between gap-4 py-3">
+                      <span className="text-sm font-medium text-slate-300">USDT</span>
+                      <div className="flex min-w-0 items-baseline gap-2">
+                        <span className="truncate text-xl font-bold tracking-tight">{usdtBalance ?? "—"}</span>
+                        <span className="text-xs font-semibold text-emerald-300">USDT</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between gap-4 py-3">
+                      <span className="text-sm font-medium text-slate-300">Gram</span>
+                      <div className="flex min-w-0 items-baseline gap-2">
+                        <span className="truncate text-xl font-bold tracking-tight">{balance}</span>
+                        <span className="text-xs font-semibold text-sky-300">GRAM</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-5 flex gap-3">
+                    <Dialog open={sendOpen} onOpenChange={(open) => { setSendOpen(open); setSendError(null); }}>
+                      <DialogTrigger asChild>
+                        <Button className="rounded-full bg-white px-5 text-slate-950 hover:bg-slate-100">
+                          <ArrowUpRight className="h-4 w-4" /> Send
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Send {sendAsset}</DialogTitle>
+                          <DialogDescription>Select an asset, then enter the destination wallet and amount.</DialogDescription>
+                        </DialogHeader>
+                        <form onSubmit={sendAssetTransaction} className="space-y-4">
+                          <div className="space-y-2">
+                            <label htmlFor="send-asset" className="text-sm font-medium text-slate-900">Asset</label>
+                            <Select
+                              value={sendAsset}
+                              onValueChange={(value: SendAsset) => {
+                                setSendAsset(value);
+                                setSendAmount("");
+                                setSendError(null);
+                              }}
+                              disabled={isSending}
+                            >
+                              <SelectTrigger id="send-asset">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="ARAVT">Aravt (ARAVT)</SelectItem>
+                                <SelectItem value="USDT">USDT</SelectItem>
+                                <SelectItem value="GRAM">Gram (GRAM)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <label htmlFor="send-recipient" className="text-sm font-medium text-slate-900">Recipient address</label>
+                            <Input id="send-recipient" value={recipient} onChange={(event) => setRecipient(event.target.value)} placeholder="EQ... or UQ..." autoComplete="off" required disabled={isSending} />
+                          </div>
+                          <div className="space-y-2">
+                            <label htmlFor="send-amount" className="text-sm font-medium text-slate-900">Amount ({sendAsset})</label>
+                            <Input id="send-amount" type="number" inputMode="decimal" min="0" step="any" value={sendAmount} onChange={(event) => setSendAmount(event.target.value)} placeholder="0.00" required disabled={isSending} />
+                          </div>
+                          {sendError && <p role="alert" className="text-sm text-red-600">{sendError}</p>}
+                          <DialogFooter>
+                            <Button type="submit" disabled={isSending}>
+                              {isSending && <Loader2 className="h-4 w-4 animate-spin" />}
+                              {isSending ? "Confirming..." : "Review transaction"}
+                            </Button>
+                          </DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={receiveOpen} onOpenChange={(open) => { setReceiveOpen(open); setCopied(false); }}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" className="rounded-full border-white/20 bg-white/5 px-5 text-white hover:bg-white/10 hover:text-white">
+                          <ArrowDownLeft className="h-4 w-4" /> Receive
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Receive GRAM</DialogTitle>
+                          <DialogDescription>Share this address with the person sending you GRAM.</DialogDescription>
+                        </DialogHeader>
+                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm leading-6 text-slate-700 break-all">
+                          {friendlyAddress}
+                        </div>
+                        <Button type="button" onClick={copyAddress} className="w-full">
+                          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          {copied ? "Address copied" : "Copy address"}
+                        </Button>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
                 </div>
-                <button type="button" onClick={copyAddress} className="flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300 transition hover:bg-white/10 hover:text-white">
-                  <span className="font-mono">{formatAddress(account.address)}</span>
+                {/* <button type="button" onClick={copyAddress} className="flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-300 transition hover:bg-white/10 hover:text-white">
+                  <span className="font-mono">{formatAddress(friendlyAddress)}</span>
                   {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                </button>
+                </button> */}
               </CardContent>
             </Card>
 
             <Card className="rounded-3xl border-slate-200 shadow-sm">
               <CardHeader>
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50"><Coins className="h-5 w-5 text-violet-600" /></div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50"><Coins className="h-5 w-5 text-violet-600" /></div>
                 <CardTitle className="text-lg">Buy Aravt tokens</CardTitle>
-                <CardDescription>Convert TON into $ARAVT directly from your connected wallet.</CardDescription>
+                <CardDescription>Convert GRAM into $ARAVT directly from your connected wallet.</CardDescription>
               </CardHeader>
               <CardContent className="[&>div]:p-0 [&_h1]:hidden"><SellToken /></CardContent>
             </Card>
@@ -318,6 +593,54 @@ const Wallet = () => {
             </div>
             {!isLinked && <Button variant="outline" size="sm" className="rounded-xl" onClick={linkConnectedWallet} disabled={isLinking}>{isLinking && <Loader2 className="animate-spin" />} Link wallet</Button>}
           </div>
+
+          <Card className="rounded-3xl border-slate-200 shadow-sm">
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle className="text-lg">My NFTs</CardTitle>
+                <CardDescription className="mt-1.5">Digital collectibles held by this wallet.</CardDescription>
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                <ImageIcon className="h-5 w-5" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoading && nfts.length === 0 ? (
+                <div className="flex items-center justify-center gap-2 py-12 text-sm text-slate-500">
+                  <Loader2 className="h-5 w-5 animate-spin" /> Loading NFTs...
+                </div>
+              ) : nfts.length === 0 ? (
+                <div className="rounded-2xl border border-dashed py-12 text-center">
+                  <ImageIcon className="mx-auto h-7 w-7 text-slate-300" />
+                  <p className="mt-3 text-sm font-medium text-slate-700">No NFTs yet</p>
+                  <p className="mt-1 text-xs text-slate-400">Collectibles received by this wallet will appear here.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                  {nfts.map((nft) => {
+                    const preview = getNftPreview(nft);
+                    return (
+                      <article key={nft.address.toRawString()} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                        <div className="aspect-square bg-slate-100">
+                          {preview ? (
+                            <img src={preview} alt={getNftName(nft)} loading="lazy" className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full items-center justify-center">
+                              <ImageIcon className="h-8 w-8 text-slate-300" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 p-3">
+                          <p className="truncate text-sm font-semibold text-slate-900">{getNftName(nft)}</p>
+                          <p className="mt-1 truncate text-xs text-slate-500">{nft.collection?.name || "Independent NFT"}</p>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           <Card className="rounded-3xl border-slate-200 shadow-sm">
             <CardHeader className="flex-row items-center justify-between space-y-0">
@@ -342,7 +665,7 @@ const Wallet = () => {
                           <p className="mt-0.5 truncate text-xs text-slate-500">{transaction.comment || formatDate(transaction.timestamp)}</p>
                         </div>
                         <div className="shrink-0 text-right">
-                          {transaction.type === "TonTransfer" && transaction.amount && <p className="text-sm font-semibold text-slate-900">{(Number(transaction.amount) / 1e9).toLocaleString(undefined, { maximumFractionDigits: 4 })} TON</p>}
+                          {transaction.type === "TonTransfer" && transaction.amount && <p className="text-sm font-semibold text-slate-900">{(Number(transaction.amount) / 1e9).toLocaleString(undefined, { maximumFractionDigits: 4 })} GRAM</p>}
                           {transaction.type === "JettonTransfer" && transaction.amount && <p className="text-sm font-semibold text-slate-900">{Number(transaction.amount).toLocaleString()} {transaction.jetton?.symbol}</p>}
                           {transaction.type === "JettonSwap" && <p className="text-sm font-semibold text-slate-900">{transaction.amountIn} → {transaction.amountOut}</p>}
                           <p className="mt-0.5 text-xs text-slate-400">{formatDate(transaction.timestamp)}</p>

@@ -1,13 +1,14 @@
-import { Account, useTonConnectUI } from '@tonconnect/ui-react';
+import { Account, useTonConnectUI, useTonWallet } from '@tonconnect/ui-react';
 import { Sender, SenderArguments } from '@ton/core';
 
 export function useTonConnect(): { sender: Sender; connected: boolean; account: Account | null } {
   const [tonConnectUI] = useTonConnectUI();
+  const wallet = useTonWallet();
 
   return {
     sender: {
       send: async (args: SenderArguments) => {
-        tonConnectUI.sendTransaction({
+        await tonConnectUI.sendTransaction({
           messages: [
             {
               address: args.to.toString(),
@@ -19,7 +20,7 @@ export function useTonConnect(): { sender: Sender; connected: boolean; account: 
         });
       },
     },
-    connected: tonConnectUI.connected,
-    account: tonConnectUI.account,
+    connected: wallet !== null,
+    account: wallet?.account ?? null,
   };
 }
