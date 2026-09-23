@@ -9,7 +9,7 @@ import AravtRadialTree from '@/components/visualizations/AravtRadialTree';
 import useSelectedAravt from '@/hooks/useSelectedAravt';
 import { useAravtsStore } from '@/store/aravts';
 import { useAuthStore } from '@/store/auth';
-import { Link, List, Network, Plus, Search } from 'lucide-react';
+import { List, Network, Plus, Search } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 const BrowseAravts = () => {
