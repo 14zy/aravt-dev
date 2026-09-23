@@ -96,6 +96,7 @@ const Login = ({ onLoginSuccess }: LoginProps): JSX.Element => {
             <div className="mt-8">
               <div className="mb-8">
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+                  🌀
                   {/* <CheckCircle2 className="h-6 w-6" /> */}
                 </div>
                 <h2 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Welcome back</h2>
