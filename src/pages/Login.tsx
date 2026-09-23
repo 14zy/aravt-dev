@@ -8,15 +8,15 @@ import { useAuthStore } from '@/store/auth';
 import { User } from '@/types';
 import {
   ArrowRight,
-  BriefcaseBusiness,
-  CheckCircle2,
+  // BriefcaseBusiness,
+  // CheckCircle2,
   Eye,
   EyeOff,
   Globe,
   Loader2,
-  Send,
-  Sparkles,
-  Users,
+  // Send,
+  // Sparkles,
+  // Users,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
