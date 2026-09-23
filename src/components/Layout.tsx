@@ -54,7 +54,7 @@ export default function Layout() {
               {user &&
                 (hasAravt ? (
                   <div className="flex">
-                    <NavLink to="/browse">🌀 Aravts (6)</NavLink>
+                    <NavLink to="/browse">🌀 Aravts</NavLink>
                     <NavLink to="/Learn">📚 Learn</NavLink>
                     {isAdmin && <NavLink to="/admin">Admin</NavLink>}
                   </div>
@@ -73,13 +73,13 @@ export default function Layout() {
       )}
 
       <main className="flex-grow w-full">
-        <div className="max-w-7xl w-full mx-auto sm:px-6 lg:px-8 flex flex-col">
+        <div className="max-w-7xl w-full py-4 mx-auto sm:px-6 lg:px-8 flex flex-col">
           <Outlet />
         </div>
       </main>
 
       {isNeedHeader && hasAravt && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 h-24">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 h-20">
           <div className="h-full flex items-center justify-center gap-4 px-4 max-w-7xl mx-auto w-full">
             {/* Feed */}
             <NavLink to="/feed">🧭 Feed</NavLink>
