@@ -1,18 +1,25 @@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { User } from '@/types';
-import { ArrowRight, Globe } from 'lucide-react';
+import {
+  ArrowRight,
+  BriefcaseBusiness,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Globe,
+  Loader2,
+  Send,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-
-
-import { api } from '@/lib/api';
 
 interface LoginProps {
   onLoginSuccess?: () => void;
@@ -27,12 +34,16 @@ const Login = ({ onLoginSuccess }: LoginProps): JSX.Element => {
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const signupPath = referralInfo
+    ? `/signup?ref=${referralInfo.referredById}${referralInfo.aravtId ? `&aravtId=${referralInfo.aravtId}` : ''}`
+    : '/signup';
 
-  const handleUsernameLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUsernameLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
     setIsLoading(true);
     setError('');
 
@@ -40,216 +51,169 @@ const Login = ({ onLoginSuccess }: LoginProps): JSX.Element => {
       const normalizedUsername = normalizeUsername(username);
       const { access_token, user } = await api.login(normalizedUsername, password);
       setToken(access_token);
-      const current_user: User = await api.users_user(user.id);
+      const currentUser: User = await api.users_user(user.id);
 
-      login(current_user, access_token);
+      login(currentUser, access_token);
       onLoginSuccess?.();
 
       if (referralInfo?.aravtId) {
         useAuthStore.getState().setReferralInfo(null);
         navigate(`/aravts/${referralInfo.aravtId}`);
-      } else if ((current_user.aravts ?? []).length > 0) {
-        navigate('/browse');
       } else {
         navigate('/browse');
       }
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Invalid credentials. Please try again.');
+    } catch (loginError: unknown) {
+      setError(loginError instanceof Error ? loginError.message : 'Invalid credentials. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-center min-h-screen bg-gray-50 pt-4">
-      <Card className="w-full max-w-md mx-4">
-        <CardHeader className="space-y-1">
-          <div className="flex items-center justify-between pb-2">
-            <CardTitle className="text-2xl">ARAVT.IO</CardTitle>
+    <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-50 text-left shadow-sm">
+      <div className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-violet-200/60 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 right-1/4 h-80 w-80 rounded-full bg-emerald-100/70 blur-3xl" />
 
-            <Select defaultValue="all">
-              <SelectTrigger className="w-[64px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all"><Globe className="h-6 w-6 text-gray-500" /></SelectItem>
-                <SelectItem value="mn">🇲🇳 Mongolian</SelectItem>
-                <SelectItem value="ru">🇷🇺 Rusain</SelectItem>
-                <SelectItem value="zh">🇨🇳 Chinese</SelectItem>
-                <SelectItem value="jp">🇯🇵 Japanese</SelectItem>
-                <SelectItem value="kp">🇰🇷 Korean</SelectItem>
-              </SelectContent>
-            </Select>
+      <main className="relative mx-auto px-8 grid min-h-[calc(100vh-4rem)] max-w-7xl lg:grid-cols-[1.08fr_0.92fr]">
+        
 
-          </div>
-          {/* <CardDescription>
-            Please log in or register to continue
-          </CardDescription> */}
-        </CardHeader>
-
-        <div className="relative w-full  ">
-                <p className="text-lg pb-4 font-semibold">Welcome to Aravt</p>
-
-                <iframe
-                  width="560"
-                  height="315"
-                  src="https://www.youtube.com/embed/wUE58WtpcAc?si=uX2H-7UJMIvOvSAf"
-                  title="YouTube video player"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                  allowFullScreen
-                  className="w-full h-64 pt-2"
-                ></iframe>
-                <a href="https://www.youtube.com/@aravtsystems" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                  YouTube.com/@aravtsystems
-                </a>
+        <section className="order-1 flex items-start justify-center border-b border-slate-200 bg-white/80 px-5 py-8 backdrop-blur-xl sm:px-10 sm:py-12 lg:order-2 lg:items-center lg:border-b-0 lg:border-l">
+          <div className="w-full max-w-md">
+            <div className="mb-10 flex items-center justify-between lg:hidden">
+              <div className="flex items-center gap-3">
+                {/* <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950 text-white">
+                  <Sparkles className="h-5 w-5" />
+                </span> */}
+                <span className="font-bold tracking-[0.16em] text-slate-950">ARAVT.IO</span>
               </div>
-              
-        <CardContent className="space-y-4 pt-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+              <LanguageSelect />
+            </div>
 
-          <Tabs defaultValue="username" className="space-y-4">
-            {/*<TabsList className="grid w-full grid-cols-1">
-              <TabsTrigger value="username">Username</TabsTrigger>
-              {<TabsTrigger value="wallet">TON Wallet</TabsTrigger> }
-            </TabsList>
-            */}
+            <div className="hidden justify-end lg:flex">
+              <LanguageSelect />
+            </div>
 
-            {/* <TabsContent value="wallet">
-              <div className="space-y-4">
-                <div className="w-full flex justify-center">
-                  <TonConnectButton />
+            <div className="mt-8">
+              <div className="mb-8">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+                  {/* <CheckCircle2 className="h-6 w-6" /> */}
                 </div>
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white px-2 text-gray-500">
-                      Secure and decentralized
-                    </span>
-                  </div>
-                </div>
-                <CardFooter className="flex flex-col space-y-4">
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => window.open('https://db.aravt.io', '_blank')}
-                  >
-                    Don't have a TON wallet?
-                  </Button>
-                </CardFooter>
+                <h2 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">Welcome back</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-500">Sign in to continue to your Aravt workspace.</p>
               </div>
-            </TabsContent> */}
 
-            <TabsContent value="username">
+              {error && (
+                <Alert variant="destructive" className="mb-6 rounded-2xl" role="alert" aria-live="polite">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
               <form onSubmit={handleUsernameLogin} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="username" className="text-sm font-semibold text-slate-700">Username</Label>
                   <Input
                     id="username"
                     type="text"
-                    placeholder=""
+                    placeholder="Enter your username"
                     value={username}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
-                    onBlur={() => setUsername(prev => normalizeUsername(prev))}
+                    onChange={(event) => setUsername(event.target.value)}
+                    onBlur={() => setUsername(previous => normalizeUsername(previous))}
                     autoComplete="username"
                     autoCapitalize="none"
                     autoCorrect="off"
                     spellCheck={false}
                     required
+                    className="h-12 rounded-xl border-slate-200 bg-white px-4 text-slate-950 placeholder:text-slate-400 focus-visible:ring-violet-500"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                    required
-                  />
+                  <div className="flex items-center justify-between gap-4">
+                    <Label htmlFor="password" className="text-sm font-semibold text-slate-700">Password</Label>
+                    <Link to="/forgot-password" className="!text-xs !font-semibold !text-violet-700 hover:!text-violet-900 hover:underline">
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="   Enter your password"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      autoComplete="current-password"
+                      required
+                      className="h-12 rounded-xl border-slate-200 bg-white px-4 pr-12 text-slate-950 placeholder:text-slate-400 focus-visible:ring-violet-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(previous => !previous)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      aria-pressed={showPassword}
+                      className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg bg-transparent p-0 text-slate-400 transition hover:border-transparent hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
+
                 <Button
                   type="submit"
-                  className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                   disabled={isLoading}
+                  className="h-12 w-full rounded-xl bg-slate-950 text-sm font-semibold text-white shadow-lg shadow-slate-950/15 transition hover:-translate-y-0.5 hover:bg-violet-700 hover:shadow-violet-700/20"
                 >
                   {isLoading ? (
-                    'Signing in...'
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
                   ) : (
                     <>
-                      Log in
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      Sign in
+                      <ArrowRight className="h-4 w-4" />
                     </>
                   )}
                 </Button>
-                <div className="text-center text-sm">
-                  Don't have an account?{" "}
-                  <Link
-                    to={`/signup${referralInfo ?
-                      `?ref=${referralInfo.referredById}${referralInfo.aravtId ? `&aravtId=${referralInfo.aravtId}` : ''
-                      }`
-                      : ''
-                      }`}
-                    className="text-primary hover:underline"
-                  >
-                    Register
-                  </Link>
-                  <br />
-                  <Link
-                    to="/forgot-password"
-                    className="text-primary hover:underline"
-                  >
-                    Forgot password?
-                  </Link>
-                  <br />
-                  <Link
-                    to="/resend-email"
-                    className="text-primary hover:underline"
-                  >
-                    Resend confirmation E-mail
-                  </Link>
-                </div>
               </form>
 
-              
-
-              <div className="relative w-full h-80 mt-4">
-
-                <img
-                  src="https://app.aravt.io/img/gerege/photo_2568-01-31 15.54.09.jpeg"
-                  alt="Background"
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-
-                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                  <a
-                    href="https://t.me/aravtforum"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white text-lg font-semibold bg-blue-500 px-4 py-2 rounded-md hover:bg-blue-600"
-                  >
-                    Join TG Community
-                  </a>
-                </div>
-
-
-
+              <div className="mt-8 border-t border-slate-100 pt-6 text-center">
+                <p className="text-sm text-slate-500">
+                  New to Aravt?{' '}
+                  <Link to={signupPath} className="!font-semibold !text-violet-700 hover:!text-violet-900 hover:underline">
+                    Create an account
+                  </Link>
+                </p>
+                <Link
+                  to="/resend-email"
+                  className="mt-3 inline-block !text-xs !font-normal !text-slate-400 hover:!text-slate-700 hover:underline"
+                >
+                  Resend confirmation email
+                </Link>
               </div>
-
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+            </div>
+          </div>
+        </section>
+        
+      </main>
     </div>
   );
 };
+
+const LanguageSelect = () => (
+  <Select defaultValue="en">
+    <SelectTrigger aria-label="Select language" className="h-10 w-[104px] rounded-xl border-slate-200 bg-white text-slate-600 shadow-none">
+      <Globe className="mr-2 h-4 w-4 text-violet-600" />
+      <SelectValue />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="en">English</SelectItem>
+      <SelectItem value="mn">🇲🇳 Mongolian</SelectItem>
+      <SelectItem value="ru">🇷🇺 Russian</SelectItem>
+      <SelectItem value="zh">🇨🇳 Chinese</SelectItem>
+      <SelectItem value="jp">🇯🇵 Japanese</SelectItem>
+      <SelectItem value="kr">🇰🇷 Korean</SelectItem>
+    </SelectContent>
+  </Select>
+);
 
 export default Login;

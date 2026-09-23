@@ -263,7 +263,7 @@ const TasksManagement = () => {
                               <SelectValue placeholder="Type" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="AT">AT</SelectItem>
+                              <SelectItem value="AT">Aravt</SelectItem>
                               <SelectItem value="USDT">USDT</SelectItem>
                             </SelectContent>
                           </Select>
