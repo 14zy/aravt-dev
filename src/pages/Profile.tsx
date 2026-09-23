@@ -135,9 +135,17 @@ const Profile = () => {
   return (
     <div className="  p-4 bg-white rounded-lg shadow">
       <h2 className="text-2xl font-bold mb-4">My Profile</h2>
+
+            <div className="space-y-2">
+        <p><strong>Username:</strong> {user?.username}</p>
+        <p><strong>Email:</strong> {user?.email}</p>
+        <p><strong>Full Name:</strong> {user?.full_name}</p>
+        <p><strong>Date of Birth:</strong> {user?.date_of_birth}</p>
+        <p><strong>City:</strong> {user?.city}</p>
+      </div>
       
       {/* Avatar Section */}
-      <Card className="mb-6">
+      <Card className="mb-6 mt-4">
         <CardContent className="pt-6">
           <div className="flex flex-col items-center gap-4">
             <Avatar className="h-24 w-24">
@@ -192,15 +200,9 @@ const Profile = () => {
         </CardContent>
       </Card>
 
-      <div className="space-y-2">
-        <p><strong>Username:</strong> {user?.username}</p>
-        <p><strong>Email:</strong> {user?.email}</p>
-        <p><strong>Full Name:</strong> {user?.full_name}</p>
-        <p><strong>Date of Birth:</strong> {user?.date_of_birth}</p>
-        <p><strong>City:</strong> {user?.city}</p>
-      </div>
 
-      <div className="mt-4">
+
+      {/* <div className="mt-4">
         <Button
           onClick={async () => {
             try {
@@ -215,7 +217,7 @@ const Profile = () => {
         >
           Start KYC Process
         </Button>
-      </div>
+      </div> */}
 
       {/* Skills Section */}
       <Card className="mt-4">
@@ -331,9 +333,9 @@ const Profile = () => {
                 <Link to={`/dashboard/${currentAravtId || ''}`}>Go to Dashboard</Link>
               </Button>
 
-              <Button asChild className="w-full">
+              {/* <Button asChild className="w-full">
                 <Link to="https://t.me/share/url?url=https://aravt.io/">Share app</Link>
-              </Button>
+              </Button> */}
               
             </div>
           ) : (
