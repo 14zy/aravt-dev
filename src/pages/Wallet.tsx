@@ -483,13 +483,13 @@ const Wallet = () => {
                   </Button>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">Total available balance</p>
-                  <div className="mt-1 flex items-baseline gap-2">
+                  <p className="text-sm text-slate-400">Available balance</p>
+                  <div className="mt-1 items-baseline gap-2">
                     <span className="text-3xl font-bold tracking-tight sm:text-4xl">{totalAvailableBalance}</span>
                     <span className="text-sm font-semibold text-emerald-300">USDT</span>
                   </div>
                   <p className="mt-1 text-xs text-slate-500">1 ARAVT = 0.01 USDT · 1 GRAM = 1.2 USDT</p>
-                  <p className="mt-5 text-sm text-slate-400">Available balances</p>
+                  {/* <p className="mt-5 text-sm text-slate-400">Available balances</p> */}
                   <div className="mt-3 w-full max-w-md divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/5 px-4">
                     <div className="flex items-center justify-between gap-4 py-3">
                       <span className="text-sm font-medium text-slate-300">Aravt</span>
