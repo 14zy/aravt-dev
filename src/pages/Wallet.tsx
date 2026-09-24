@@ -62,6 +62,8 @@ interface AccountInfo {
 
 const ARAVT_JETTON_ADDRESS = Address.parse("0:d36706f8299d434b89965cdfe07515dd85c88d9dc54c6dca57808ed441e3d822");
 const USDT_JETTON_ADDRESS = Address.parse("0:b113a994b5024a16719f69139328eb759596c38a25f59028b146fecdc3621dfe");
+const ARAVT_USDT_RATE = 0.01;
+const GRAM_USDT_RATE = 1.2;
 
 type SendAsset = "ARAVT" | "USDT" | "GRAM";
 type JettonAsset = Exclude<SendAsset, "GRAM">;
@@ -340,6 +342,22 @@ const Wallet = () => {
       : "—",
     [accountInfo],
   );
+  const totalAvailableBalance = useMemo(() => {
+    if (!accountInfo || aravtBalance === null || usdtBalance === null) return "—";
+
+    const gramAmount = Number(accountInfo.balance) / 1e9;
+    const aravtHolding = jettonHoldings.ARAVT;
+    const usdtHolding = jettonHoldings.USDT;
+    const aravtAmount = aravtHolding
+      ? Number(aravtHolding.balance) / (10 ** aravtHolding.jetton.decimals)
+      : 0;
+    const usdtAmount = usdtHolding
+      ? Number(usdtHolding.balance) / (10 ** usdtHolding.jetton.decimals)
+      : 0;
+
+    return (usdtAmount + (aravtAmount * ARAVT_USDT_RATE) + (gramAmount * GRAM_USDT_RATE))
+      .toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }, [accountInfo, aravtBalance, jettonHoldings, usdtBalance]);
   const friendlyAddress = useMemo(
     () => account?.address
       ? toUserFriendlyAddress(account.address, account.chain === CHAIN.TESTNET)
@@ -465,7 +483,13 @@ const Wallet = () => {
                   </Button>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">Available balances</p>
+                  <p className="text-sm text-slate-400">Total available balance</p>
+                  <div className="mt-1 flex items-baseline gap-2">
+                    <span className="text-3xl font-bold tracking-tight sm:text-4xl">{totalAvailableBalance}</span>
+                    <span className="text-sm font-semibold text-emerald-300">USDT</span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-500">1 ARAVT = 0.01 USDT · 1 GRAM = 1.2 USDT</p>
+                  <p className="mt-5 text-sm text-slate-400">Available balances</p>
                   <div className="mt-3 w-full max-w-md divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/5 px-4">
                     <div className="flex items-center justify-between gap-4 py-3">
                       <span className="text-sm font-medium text-slate-300">Aravt</span>
