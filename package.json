@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "description": "Open-source web frontend for the Aravt collaboration platform.",
   "license": "MIT",
+  "overrides": {
+    "braces": "^3.0.3"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/14zy/aravt-dev.git"
